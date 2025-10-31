@@ -1,0 +1,210 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: "Inter", Helvetica, Arial, sans-serif;
+  background: #fff;
+  color: #000;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+}
+
+header {
+  --logo-height: clamp(24px, 3.2vw, 34px); /* 로고 높이: 뷰포트 기반 유동 (최소치 ↓) */
+  --gutter: clamp(16px, 2.2vw, 24px);      /* 좌우 여백: 뷰포트 기반 유동 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 var(--gutter);
+  z-index: 100;
+}
+
+/* === LOGO CENTER === */
+header .logo {
+  height: var(--logo-height);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+header .logo img,
+header .logo svg {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+
+/* 로고 선택/드래그 방지 */
+header .logo * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none; /* 클릭 통과 (장식용일 때) */
+}
+
+#zoomBtn {
+  position: absolute;
+  left: var(--gutter);            /* 헤더 왼쪽 여백 고정 */
+  top: 0;                /* 헤더의 맨 위에서 시작 */
+  height: 72px;          /* 헤더 높이와 동일 */
+  font-size: var(--logo-height);
+  /* font-size: 34px; */
+  font-weight: 600;
+  border: none;
+  background: none;
+  cursor: pointer;
+  line-height: 1;
+  display: block;        /* 절대 배치 기준 요소 */
+  /* prevent text selection/drag */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+  
+#zoomBtn .icon {
+  position: absolute;      /* 두 아이콘을 겹쳐놓음 */
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-block;
+  will-change: transform, opacity; /* 부드럽게 애니메이션 */
+  /* prevent text selection inside icon spans */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+}
+
+main {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;    /* ← 항상 위에서 시작 */
+  justify-content: center;    /* 가로만 가운데 */
+  padding-top: 96px; /* header(72) + top spacing(24) */
+  padding-bottom: 72px; /* 👈 페이지 맨 아래 여백 확보 */
+}
+
+.grid {
+  position: relative;
+  width: 90%;
+  max-width: 1400px;
+}
+
+.item {
+    position: absolute;
+    background: #eee;
+    aspect-ratio: 1 / 1;
+    font-size: 2rem;
+    color: #555;
+    font-weight: 500;
+  
+    --tx: 0px;
+    --ty: 0px;
+  
+    /* 개별 트랜스폼 속성으로 분리: 레이아웃은 translate(1s), hover는 scale(0.15s) */
+    translate: var(--tx) var(--ty);
+    scale: 1;
+    transform-origin: center;
+    will-change: translate, scale;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    transition:
+      translate 1s cubic-bezier(0.77, 0, 0.175, 1),
+      width 1s cubic-bezier(0.77, 0, 0.175, 1),
+      height 1s cubic-bezier(0.77, 0, 0.175, 1),
+      scale 0.15s ease-out;
+}
+
+.item:hover {
+    scale: var(--hover-scale); 
+    z-index: 5;
+  }
+/* === NAVIGATION === */
+.site-nav {
+  position: absolute;
+  right: var(--gutter);
+  top: 0;
+  height: 72px;
+  margin-left: auto;
+  display: flex;
+  gap: clamp(12px, 1.8vw, 24px);
+  align-items: center;
+}
+  
+
+.site-nav img {
+  height: calc(var(--logo-height) / 2); /* 로고 높이의 절반 */
+  width: auto;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+  .site-nav a:hover img {
+    opacity: 0.6;
+  }
+  
+  .site-nav .active {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  @media (max-width: 600px) {
+    header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      column-gap: var(--gutter);
+      padding: 0 var(--gutter); /* ✅ 좌우 여백 복원 */
+    }
+  
+  #zoomBtn {
+    position: fixed;       /* 절대 위치 해제 → 그리드 자식으로 배치 */
+    grid-column: 1;         /* 왼쪽 컬럼 */
+    justify-self: start;
+    align-self: center;     /* 세로 중앙 */
+  }
+
+  header .logo {
+    position: static;       /* 절대 위치 해제 */
+    grid-column: 2;         /* 가운데 컬럼 */
+    justify-self: center;
+    align-self: center;     /* 세로 중앙 */
+    transform: none;
+  }
+
+  .site-nav {
+    position: static;       /* 절대 위치 해제 */
+    grid-column: 3;         /* 오른쪽 컬럼 */
+    justify-self: end;
+    align-self: center;     /* 세로 중앙 */
+
+  }
+  }
