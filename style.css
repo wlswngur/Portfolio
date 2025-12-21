@@ -1,0 +1,1260 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-color: #f2f2f2;
+  --text-color: #000;
+  --invert: 0;
+  --glass-bg: rgba(255, 255, 255, 0);
+  --glass-shadow: inset 0 15px 15px -10px rgba(0, 0, 0, 0.05);
+  --header-height: 72px;
+  --mockup-shadow: 0px 0px 35px 0px rgba(0, 0, 0, 0.22);
+  --panel-text-shadow: 0 0 11px rgba(255, 255, 255, 0.5);
+  --panel-icon-shadow: drop-shadow(0 0 7px rgba(255, 255, 255, 0.3));
+  --header-bg: rgba(242, 242, 242, 0.7);
+}
+
+html.dark-mode {
+  --bg-color: #131313;
+  --text-color: #fff;
+  --invert: 1;
+  --glass-bg: rgba(0, 0, 0, 0);
+  --glass-shadow: inset 0 12px 12px -8px rgba(255, 255, 255, 0.02);
+  --mockup-shadow: 0px 0px 45px 0px rgba(255, 255, 255, 0.12);
+  --panel-text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+  --panel-icon-shadow: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8));
+  --header-bg: rgba(19, 19, 19, 0.7);
+}
+
+html {
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+html::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari/Opera */
+}
+
+body {
+  min-height: 100%;
+  height: auto;
+  font-family: "Inter", Helvetica, Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow-x: hidden;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+header {
+  --logo-height: clamp(24px, 3.2vw, 34px);
+  --gutter: clamp(16px, 2.2vw, 24px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 var(--gutter);
+  z-index: 10000;
+  transition: transform 0.3s ease, background 0.4s ease;
+  /* Smooth hide/show */
+}
+
+/* Hide Logo and Nav on Item Page */
+body.item-view header .logo,
+body.item-view header .site-nav {
+  display: none;
+}
+
+@media (max-width: 600px) {
+
+  /* On mobile item page, keep header but hide nav buttons only */
+  body.item-view header .site-nav {
+    display: none;
+  }
+
+  /* Ensure Logo is visible on mobile item view */
+  body.item-view header .logo {
+    display: flex;
+  }
+}
+
+/* === LOGO CENTER === */
+header .logo {
+  height: var(--logo-height);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+header .logo img,
+header .logo svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  filter: invert(var(--invert));
+  transition: filter 0.3s ease;
+}
+
+/* 로고 선택/드래그 방지 */
+header .logo * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  /* 클릭 통과 (장식용일 때) */
+}
+
+#zoomBtn {
+  position: absolute;
+  left: var(--gutter);
+  /* 헤더 왼쪽 여백 고정 */
+  top: calc(50% + (var(--logo-height) / 2) - (var(--arm) * 2 + var(--thick)));
+  height: calc(var(--arm) * 2 + var(--thick));
+  width: calc(var(--arm) * 2 + var(--thick));
+  border: none;
+  background: none;
+  cursor: pointer;
+  z-index: 150;
+  display: flex;
+  /* 내부 글리프를 하단 정렬 */
+  align-items: flex-end;
+  /* 하단 라인에 맞춤 */
+  justify-content: center;
+  /* prevent text selection/drag */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === PLUS-BUTTON (no GSAP) === */
+#zoomBtn.plus-btn {
+  --arm: calc(var(--logo-height) / 2.5);
+  --thick: calc(var(--logo-height) / 7.2);
+  --pressed-extend: 1.6;
+  /* '<' 상태에서 팔 길이 확장 비율 (+와 동일 외곽 크기 보정) */
+  --join-fix: calc(var(--thick) / 2);
+  /* 교차부 미세 겹침 보정 */
+  --center-shift-x: calc(var(--thick) * 2.5);
+  /* '<' 상태에서 시각 중심 좌측 보정 (살짝 더 이동) */
+}
+
+#zoomBtn.plus-btn .glyph {
+  position: relative;
+  width: calc(var(--arm) * 2 + var(--thick));
+  height: calc(var(--arm) * 2 + var(--thick));
+  display: block;
+  will-change: transform;
+  transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+  pointer-events: none;
+}
+
+#zoomBtn.plus-btn .bar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: var(--text-color);
+  will-change: transform;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+  pointer-events: none;
+}
+
+/* horizontal arms */
+#zoomBtn.plus-btn .bar.h {
+  height: var(--thick);
+  width: var(--arm);
+}
+
+#zoomBtn.plus-btn .bar.h.left {
+  transform: translate(-100%, -50%);
+  transform-origin: right center;
+}
+
+#zoomBtn.plus-btn .bar.h.right {
+  transform: translate(0, -50%);
+  transform-origin: left center;
+}
+
+/* vertical arms */
+#zoomBtn.plus-btn .bar.v {
+  width: var(--thick);
+  height: var(--arm);
+}
+
+#zoomBtn.plus-btn .bar.v.up {
+  transform: translate(-50%, -100%);
+  transform-origin: center bottom;
+}
+
+#zoomBtn.plus-btn .bar.v.down {
+  transform: translate(-50%, 0);
+  transform-origin: center top;
+}
+
+/* Toggle state: ㄱ(기역) → rotate 45deg to look like '<' (right/up visible) */
+#zoomBtn.plus-btn[aria-pressed="true"] .bar.h.left {
+  transform: translate(-100%, -50%) scaleX(0);
+}
+
+#zoomBtn.plus-btn[aria-pressed="true"] .bar.v.up {
+  transform: translate(-50%, -100%) scaleY(0);
+}
+
+#zoomBtn.plus-btn[aria-pressed="true"] .bar.h.right {
+  transform: translate(calc(0px - var(--join-fix)), -50%) scaleX(var(--pressed-extend));
+}
+
+#zoomBtn.plus-btn[aria-pressed="true"] .bar.v.down {
+  transform: translate(-50%, calc(0px - var(--join-fix))) scaleY(var(--pressed-extend));
+}
+
+#zoomBtn.plus-btn[aria-pressed="true"] .glyph {
+  transform: translateX(calc(-0.5 * var(--center-shift-x))) rotate(-45deg);
+}
+
+
+
+main {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  /* ← 항상 위에서 시작 */
+  justify-content: center;
+  /* 가로만 가운데 */
+  padding-top: 84px;
+  /* header(72) + top spacing(12) -> Hover expansion closes this gap */
+  padding-bottom: 72px;
+  /* 👈 페이지 맨 아래 여백 확보 */
+}
+
+.grid {
+  position: relative;
+  width: 90%;
+  max-width: 1400px;
+}
+
+.item {
+  position: absolute;
+  background: transparent;
+  aspect-ratio: 1 / 1;
+  font-size: 2rem;
+  color: #555;
+  font-weight: 500;
+
+  --tx: 0px;
+  --ty: 0px;
+
+  /* 개별 트랜스폼 속성으로 분리: 레이아웃은 translate(1s), hover는 scale(0.15s) */
+  translate: var(--tx) var(--ty);
+  scale: 1;
+  transform-origin: center;
+  will-change: translate, scale;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    translate 1s cubic-bezier(0.77, 0, 0.175, 1),
+    width 1s cubic-bezier(0.77, 0, 0.175, 1),
+    height 1s cubic-bezier(0.77, 0, 0.175, 1),
+    scale 0.15s ease-out;
+  overflow: visible;
+  /* Ensure image stays within bounds */
+}
+
+.item .label {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-color);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Fill the square */
+  display: block;
+  /* GPU acceleration for smooth transitions */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.item:hover {
+  scale: var(--hover-scale);
+  z-index: 5;
+}
+
+.item.no-transition {
+  transition: none !important;
+}
+
+/* Item 3 특별 스타일 - 가로로 긴 Concertina 이미지용 */
+.item[data-id="3"] img {
+  object-fit: contain;
+  /* 가로가 긴 이미지를 정사각형 안에 contain으로 표시 */
+  background: transparent;
+}
+
+/* Item 4 특별 스타일 - 세로로 긴 이미지용 */
+.item[data-id="4"] img {
+  object-fit: contain;
+  /* 비율 유지하면서 상하 꽉 채우기 */
+  background: transparent;
+}
+
+/* === NAVIGATION === */
+.site-nav {
+  position: absolute;
+  right: calc(var(--gutter) + 2px);
+  top: calc(50% + (var(--logo-height) / 2) - 72px);
+  height: 72px;
+  margin-left: auto;
+  display: flex;
+  gap: clamp(12px, 1.8vw, 24px);
+  align-items: flex-end;
+}
+
+
+
+.site-nav img {
+  height: calc(var(--logo-height) / 2);
+  /* 로고 높이의 절반 */
+  width: auto;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: auto;
+  filter: invert(var(--invert));
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* === NAV BUTTONS === */
+.nav-btn {
+  all: unset;
+  /* remove default button styles */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn img {
+  height: calc(var(--logo-height) / 2);
+  width: auto;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: invert(var(--invert));
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+
+@media (hover: hover) {
+  .nav-btn:hover img {
+    opacity: 0.6;
+  }
+}
+
+/* Active state for About button when panel is open */
+.about-btn.active img {
+  opacity: 0.6;
+  /* same as hover color */
+}
+
+/* Active state for Contact button when panel is open */
+.contact-btn.active img {
+  opacity: 0.6;
+  /* same as hover color */
+}
+
+/* ===== Simple About slide-down panel ===== */
+#aboutPanel[hidden] {
+  display: none;
+}
+
+#aboutPanel {
+  position: fixed;
+  top: 72px;
+  /* start just below the header */
+  left: 0;
+  right: 0;
+  /* Glassmorphism Effect */
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  /* Header Shadow Trick */
+  box-shadow: var(--glass-shadow);
+  z-index: 200;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Inter", Helvetica, Arial, sans-serif;
+  text-align: center;
+
+
+}
+
+#aboutPanel.open {
+  height: calc(100dvh - 72px);
+  /* fill screen except header - 100dvh for iOS Safari dynamic address bar */
+}
+
+#aboutPanel .about-inner {
+  font-weight: 100;
+  line-height: 1.8;
+  font-size: clamp(12px, 1.8vw, 16px);
+  white-space: nowrap;
+  /* 줄바꿈 방지 */
+
+  text-shadow: var(--panel-text-shadow);
+}
+
+#aboutPanel .about-inner strong {
+  font-weight: 900;
+  /* 기본 bold(700)보다 살짝 덜 두껍게 */
+}
+
+/* ===== Simple Contact slide-down panel ===== */
+#contactPanel[hidden] {
+  display: none;
+}
+
+#contactPanel {
+  position: fixed;
+  top: 72px;
+  /* start just below the header */
+  left: 0;
+  right: 0;
+  /* Glassmorphism Effect */
+  background: var(--glass-bg);
+  /* match About */
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  /* Header Shadow Trick */
+  box-shadow: var(--glass-shadow);
+  z-index: 200;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Flexbox Centering (Unified with About) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+#contactPanel.open {
+  height: calc(100dvh - 72px);
+  /* fill screen except header - 100dvh for iOS Safari dynamic address bar */
+}
+
+#contactPanel .contact-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#contactPanel a {
+  display: block;
+  color: var(--text-color);
+  font-size: 18px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+  text-shadow: var(--panel-text-shadow);
+}
+
+#contactPanel .insta-link img {
+  width: 40px;
+  height: auto;
+  display: block;
+  filter: invert(var(--invert)) var(--panel-icon-shadow);
+}
+
+/* Contact Stack Container - Controls spacing between Instagram and Email */
+#contactPanel .contact-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* 인스타그램 로고와 이메일 사이 간격 */
+}
+
+#contactPanel .contact-stack .insta-link {
+  display: inline-block;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+#contactPanel .contact-stack .insta-link:hover {
+  opacity: 0.6;
+  border-color: rgba(0, 0, 0, 0.45);
+}
+
+#contactPanel .contact-inner a:hover {
+  opacity: 0.6;
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 600px) {
+  header {
+    --logo-height: clamp(20px, 2vw, 30px);
+    --header-height: 48px;
+    /* 2/3 of 72px */
+    height: var(--header-height);
+    display: flex;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: var(--gutter);
+    padding: 0 var(--gutter);
+    /* ✅ 좌우 여백 복원 */
+  }
+
+  #zoomBtn {
+    position: absolute;
+    left: var(--gutter);
+    bottom: 0;
+    height: calc(var(--arm) * 2 + var(--thick));
+    transform: none;
+  }
+
+  header .logo {
+    height: clamp(16px, 2vw, 24px);
+    position: absolute;
+    /* 절대 위치 해제 */
+    justify-self: center;
+    left: 17%;
+    right: 40%;
+    align-self: center;
+    /* 세로 중앙 */
+    transform: none;
+  }
+
+  .site-nav {
+    position: absolute;
+    right: var(--gutter);
+    top: calc(50% + (var(--logo-height) / 2) - 48px);
+    height: 48px;
+    margin-left: auto;
+    display: flex;
+    gap: clamp(12px, 1.8vw, 24px);
+    align-items: flex-end;
+  }
+
+  #aboutPanel .about-inner {
+    padding: 20px;
+    /* 동일한 헤더 여백 적용 */
+    font-size: 12px;
+    letter-spacing: 0em;
+    white-space: normal !important;
+    /* 모바일에서는 줄바꿈 허용 */
+    text-align: center;
+  }
+
+  #aboutPanel,
+  #contactPanel {
+    top: 48px;
+  }
+
+  #aboutPanel.open,
+  #contactPanel.open {
+    height: calc(100dvh - 48px);
+  }
+
+  main[data-barba-namespace="home"] {
+    padding-top: 60px;
+  }
+}
+
+
+
+/* === ITEM PAGE STYLES (Redesigned) === */
+main[data-barba-namespace="item"] {
+  width: 100%;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  /* No scroll on main */
+  background: transparent;
+
+  /* Default Aspect Ratio (Portrait A3) */
+  --hero-ar: 1.414;
+}
+
+/* 1. rapper (Image + Text) */
+main[data-barba-namespace="item"] .content-wrapper {
+  position: absolute;
+  left: 5vw;
+  /* Responsive margin */
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  /* Align to top to respect padding-top */
+  gap: 5vw;
+  /* Responsive gap */
+  padding-top: 0;
+  /* Remove wrapper padding so hero can scroll to top */
+  box-sizing: border-box;
+  /* Include padding in height */
+}
+
+/* Image (Poster) - Scrollable Container */
+main[data-barba-namespace="item"] .hero {
+  width: min(65vw, 90vw / var(--hero-ar), 1400px / var(--hero-ar), calc(100dvh - 120px) / var(--hero-ar));
+  height: 100dvh;
+  /* Use full height */
+  padding-top: 72px;
+  /* Initial offset for header */
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12vh;
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Video Hero Specific Styles */
+main[data-barba-namespace="item"] .hero.video-hero {
+  height: 100dvh;
+  padding-top: 72px;
+  padding-bottom: 72px;
+  /* Symmetric padding */
+  overflow: hidden;
+  /* Disable scroll */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+main[data-barba-namespace="item"] .hero.video-hero video {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  /* GPU acceleration for smooth transitions */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Poster Hero Specific Styles (Item 1) */
+main[data-barba-namespace="item"] .hero.poster-hero {
+  height: 100dvh;
+  padding-top: 72px;
+  padding-bottom: 72px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+main[data-barba-namespace="item"] .hero.poster-hero img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+main[data-barba-namespace="item"] .hero::-webkit-scrollbar {
+  display: none;
+}
+
+/* 아이템 2 전용 - 스크롤텔링용 gap 제거 */
+main[data-barba-namespace="item"] .hero.no-gap {
+  gap: 0;
+  padding-bottom: 0;
+
+  /* iOS 스크롤 바운스 비활성화 */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+/* 모바일: 스크롤텔링 설정 */
+@media (max-width: 600px) {
+
+  /* 스크롤텔링 책 사이 갤 조절 + sticky 효과 */
+  main[data-barba-namespace="item"] .book-sequence-sticky {
+    height: 60dvh;
+    position: sticky;
+    /* 화면 중앙 배치: (가용 높이 - 이미지 높이) / 2 */
+    /* hero 영역 내에서 이미지가 보이는 영역의 중앙에 배치 */
+    /* 헤더 48px 아래에서 시작, 텍스트 위까지 약 80dvh 가용 */
+    top: calc((100dvh - 48px - 100px - 60dvh) / 2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 스크롤텔링 컨테이너 높이 (회전하는 동안 스크롤 공간) */
+  main[data-barba-namespace="item"] .book-sequence-container {
+    height: 250vh;
+    /* 스크롤 거리 - 필요시 조절 */
+  }
+
+  /* 마지막 스크롤텔링 컨테이너는 높이를 줄여서 정확히 끝나도록 */
+  main[data-barba-namespace="item"] .book-sequence-container:last-of-type {
+    height: 200vh;
+    /* 마지막 책은 조금 더 짧게 */
+  }
+
+  /* 첫 번째 이미지 중앙 정렬 wrapper */
+  main[data-barba-namespace="item"] .first-image-wrapper {
+    min-height: calc(100dvh - 48px - 100px);
+    /* 최소 높이: 화면 - 헤더 - 텍스트 */
+    display: flex;
+    align-items: center;
+    /* 수직 중앙 */
+    justify-content: center;
+    /* 수평 중앙 */
+  }
+
+  main[data-barba-namespace="item"] .first-image-wrapper img {
+    max-width: 100%;
+    max-height: 80%;
+    /* 이미지가 너무 크지 않게 */
+    width: auto;
+    height: auto;
+  }
+}
+
+main[data-barba-namespace="item"] .hero>img,
+main[data-barba-namespace="item"] .hero>video {
+  width: 100%;
+  height: auto;
+  /* aspect-ratio: 1 / var(--hero-ar); */
+  /* Video aspect ratio should probably not be forced unless desired */
+  object-fit: cover;
+  display: block;
+}
+
+main[data-barba-namespace="item"] .hero>img {
+  aspect-ratio: 1 / var(--hero-ar);
+}
+
+/* 첫 번째 이미지 wrapper - 데스크톱에서는 일반 블록 */
+main[data-barba-namespace="item"] .first-image-wrapper {
+  width: 100%;
+}
+
+main[data-barba-namespace="item"] .first-image-wrapper img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / var(--hero-ar);
+  object-fit: cover;
+  display: block;
+}
+
+/* 책 360도 스크롤텔링 섹션 - 데스크톱 (GSAP pin 사용) */
+.book-sequence-container {
+  width: 100%;
+  height: auto;
+  /* GSAP가 관리 */
+  position: relative;
+}
+
+.book-sequence-sticky {
+  width: 100%;
+  height: calc(100dvh - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  will-change: transform;
+  /* GPU 가속 레이어 미리 생성 */
+}
+
+.book-sequence-sticky img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Text (Bottom Half Center) - Fixed */
+main[data-barba-namespace="item"] .item-text {
+  position: fixed;
+  /* Fixed to viewport */
+  left: calc(5vw + min(65vw, 90vw / var(--hero-ar), 1400px / var(--hero-ar), calc(100dvh - 120px) / var(--hero-ar)) + 5vw);
+  /* After hero + gap */
+  top: 50%;
+  /* Center vertically */
+  transform: translateY(25vh);
+  /* Move to bottom half */
+
+  width: 30vw;
+  max-width: 500px;
+  font-family: "Inter", sans-serif;
+  color: var(--text-color);
+  text-align: left;
+  z-index: 10;
+  /* Above scrolling content */
+}
+
+main[data-barba-namespace="item"] .item-text h2 {
+  font-weight: 700;
+  font-size: clamp(14px, 1.2vw, 20px);
+  /* Responsive font size */
+  margin-bottom: 0.8vw;
+}
+
+main[data-barba-namespace="item"] .item-text p {
+  font-weight: 400;
+  font-size: clamp(12px, 1vw, 16px);
+  /* Responsive font size */
+  line-height: 1.5;
+}
+
+/* 3. Right: Logo (Center Y) - Fixed */
+main[data-barba-namespace="item"] .item-logo {
+  position: fixed;
+  /* Fixed to viewport */
+  right: 5vw;
+  /* Responsive margin */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20vw;
+  /* Responsive width */
+  max-width: 300px;
+  height: auto;
+  display: block;
+  z-index: 10;
+  /* Above scrolling content */
+  transition: transform 0.3s ease-in-out;
+}
+
+main[data-barba-namespace="item"] .item-logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: invert(var(--invert));
+  transition: filter 0.3s ease, transform 0.3s ease-in-out;
+}
+
+/* === MOBILE ITEM PAGE STYLES === */
+@media (max-width: 600px) {
+  main[data-barba-namespace="item"] {
+    position: relative;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-top: 0;
+    /* Remove main padding */
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+    z-index: 1;
+  }
+
+  /* Hide Desktop Logo on Item Page (Right side one) */
+  main[data-barba-namespace="item"] .item-logo {
+    display: none;
+  }
+
+  main[data-barba-namespace="item"] .content-wrapper {
+    position: static;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-top: 48px;
+    /* Header height */
+  }
+
+  main[data-barba-namespace="item"] .hero {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 10px 20px;
+    box-sizing: border-box;
+  }
+
+  /* 아이템 2 전용 - 스크롤텔링 복구 */
+  main[data-barba-namespace="item"] .hero.no-gap {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+  }
+
+  main[data-barba-namespace="item"] .hero::-webkit-scrollbar {
+    display: none;
+  }
+
+  main[data-barba-namespace="item"] .hero img:not(.concertina-sequence-wrapper img) {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+
+
+
+  main[data-barba-namespace="item"] .item-text {
+    position: static;
+    transform: translateY(0);
+    -webkit-transform: translateY(0);
+    will-change: transform, opacity;
+    width: 100%;
+    max-width: none;
+    text-align: left;
+    padding: 10px 20px;
+    flex-shrink: 0;
+    touch-action: none;
+    overscroll-behavior: none;
+    box-sizing: border-box;
+  }
+
+  main[data-barba-namespace="item"] .item-text h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  main[data-barba-namespace="item"] .item-text p {
+    font-size: 14px;
+    margin-bottom: 0;
+    line-height: 1.2;
+  }
+}
+
+/* === ITEM 3: CONCERTINA INTERACTIVE SEQUENCE === */
+/* === ITEM 3: CONCERTINA INTERACTIVE SEQUENCE === */
+@media (min-width: 601px) {
+  main[data-barba-namespace="item"] .hero.concertina-interactive {
+    padding-top: 0 !important;
+    display: block;
+    /* USER TUNABLE: Adjust this width to control image container size */
+    width: 30vw;
+    max-width: none;
+    flex: 0 0 auto;
+  }
+
+  /* Adjust text position for Concertina layout */
+  /* Restore Fixed positioning but adjust Left based on the width above */
+  .hero.concertina-interactive+.item-text {
+    position: fixed;
+    /* Keep fixed as requested */
+    left: calc(5vw + 30vw + 5vw);
+    /* Left Margin (5vw) + Hero Width (30vw) + Gap (5vw) */
+    top: 50%;
+    transform: translateY(25vh);
+    /* Y-axis untouched */
+    align-self: auto;
+  }
+}
+
+.concertina-interactive {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.concertina-sequence-wrapper {
+  width: 100%;
+  height: 100dvh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  /* Ensure top-to-bottom flow for scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Spacers that grow to center content when folded, but keep min 72px padding */
+.concertina-sequence-wrapper::before,
+.concertina-sequence-wrapper::after {
+  content: "";
+  display: block;
+  flex: 1 0 72px;
+  width: 100%;
+}
+
+.concertina-sequence-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.concertina-sequence-wrapper img {
+  max-width: 100%;
+  /* Total canvas height: (100dvh - 144px) * (1920 / 1340) */
+  height: calc((100dvh - 144px) * 1.4328);
+  width: auto;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  flex-shrink: 0;
+  /* transition removed - will be handled by GSAP for perfect sync */
+
+  /* DEFAULT (FOLDED): Content is 1340 of 1920. 
+     Empty space is (1920-1340)/2 = 290. 
+     Ratio to total canvas height = 290 / 1920 ≈ 0.151.
+  */
+  margin-top: calc((100dvh - 144px) * 1.4328 * -0.151);
+  margin-bottom: calc((100dvh - 144px) * 1.4328 * -0.151);
+}
+
+/* EXPANDED: Content is 1894 of 1920. 
+   Empty space is (1920-1894)/2 = 13.
+   Ratio to total canvas height = 13 / 1920 ≈ 0.0067.
+*/
+.concertina-sequence-wrapper.is-expanded img {
+  margin-top: calc((100dvh - 144px) * 1.4328 * -0.0067);
+  margin-bottom: calc((100dvh - 144px) * 1.4328 * -0.0067);
+}
+
+/* Mobile adjustments for Concertina (Item 3) */
+@media (max-width: 600px) {
+  .concertina-sequence-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Remove spacers on mobile */
+  .concertina-sequence-wrapper::before,
+  .concertina-sequence-wrapper::after {
+    display: none;
+  }
+
+  .concertina-sequence-wrapper img {
+    /* Simple max dimensions for centering */
+    max-width: 90%;
+    max-height: 90%;
+    width: auto;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+  }
+
+  .concertina-sequence-wrapper.is-expanded img {
+    margin: 0;
+  }
+}
+
+
+/* === Mockup Image (Item 1, 3, 4) === */
+#draggableMockup {
+  position: fixed;
+  z-index: 100;
+  /* Ensure it's above everything */
+  cursor: pointer;
+  /* Initial hidden state until JS positions it, or explicit styles */
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Prevent default browser drag ghost image */
+  -webkit-user-drag: none;
+
+  /* --- Drop Shadow Settings (User Adjustable) --- */
+  /* Format: X (Horizontal) | Y (Vertical) | Blur | Spread | Color */
+  /* 
+     1. X value: Positive = Right Shadow (Light from Left), Negative = Left
+     2. Y value: Positive = Bottom Shadow (Light from Top), Negative = Top
+     Current: 20px 20px = Right-Bottom Shadow (Light from Top-Left 45°)
+  */
+  box-shadow: var(--mockup-shadow);
+
+  /* Optional: Round corners if desired */
+  /* border-radius: 4px; */
+
+  /* Smooth transition for scaling on double-click */
+  transition: box-shadow 0.2s ease, transform 0.3s ease-in-out;
+
+  /* 확대 시 왼쪽 상단 기준 (우하단으로 확대) */
+  transform-origin: left top;
+}
+
+/* Hide swipe indicator on desktop */
+.swipe-indicator {
+  display: none;
+}
+
+/* Mobile Swipe Gallery for Mockup */
+@media (max-width: 600px) {
+
+  /* Hero becomes horizontal scroll container */
+  main[data-barba-namespace="item"] .hero.poster-hero,
+  main[data-barba-namespace="item"] .hero.video-hero {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0;
+    padding: 10px 0;
+  }
+
+  main[data-barba-namespace="item"] .hero.poster-hero::-webkit-scrollbar,
+  main[data-barba-namespace="item"] .hero.video-hero::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Each slide takes full width */
+  main[data-barba-namespace="item"] .hero.poster-hero>img,
+  main[data-barba-namespace="item"] .hero.poster-hero>video,
+  main[data-barba-namespace="item"] .hero.video-hero>img,
+  main[data-barba-namespace="item"] .hero.video-hero>video {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    scroll-snap-align: center;
+    object-fit: contain;
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+
+  /* Mobile mockup - show as second slide */
+  #draggableMockup {
+    position: static !important;
+    display: block !important;
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    scroll-snap-align: center;
+    object-fit: contain;
+    padding: 0 20px;
+    box-sizing: border-box;
+    box-shadow: none;
+    transform: none !important;
+  }
+
+  /* Swipe indicator dots - centered between hero and item-text */
+  .swipe-indicator {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 0;
+    flex-shrink: 0;
+  }
+
+  .swipe-indicator .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-color);
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+  }
+
+  .swipe-indicator .dot.active {
+    opacity: 1;
+  }
+}
+
+/* === THEME TOGGLE BUTTON === */
+#themeToggle {
+  position: absolute;
+  /* Responsive gap between + button and theme toggle (matches About/Contact gap scaling) */
+  left: calc(var(--gutter) + var(--logo-height) + clamp(8px, 1.5vw, 16px));
+  /* Align center with zoomBtn center */
+  top: calc(50% + (var(--logo-height) / 2) - (var(--logo-height) * 0.47));
+  transform: translateY(-50%);
+  /* Responsive size based on logo-height (about 70% of + button size) */
+  width: calc(var(--logo-height) * 0.75);
+  height: calc(var(--logo-height) * 0.75);
+  border: none;
+  background: transparent;
+  /* Remove background to avoid ghost outlines */
+  cursor: pointer;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: visible;
+  /* No clipping needed for shadow method */
+  pointer-events: auto;
+}
+
+#themeToggle .indicator {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: transparent;
+  /* Light mode: Full Moon - just enough inset to fill the circle */
+  box-shadow: inset calc(var(--logo-height) * 0.9) 0 0 0 var(--text-color);
+  transition: box-shadow 0.5s ease-in-out;
+}
+
+html.dark-mode #themeToggle .indicator {
+  /* Dark mode: Crescent Moon using smaller inset shadow */
+  box-shadow: inset calc(var(--logo-height) * 0.22) 0 0 0 var(--text-color);
+}
+
+/* Remove hover opacity as requested */
+#themeToggle:hover {
+  opacity: 1;
+}

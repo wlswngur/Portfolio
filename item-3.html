@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f2f2f2" id="theme-color-meta" />
+    <title>Portfolio - Item 3</title>
+    <link rel="icon" href="assets/favicon111.svg" type="favicon.svg">
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body data-barba="wrapper">
+
+    <header>
+        <a class="logo" href="index.html" aria-label="Home">
+            <img src="assets/logo.svg" alt="Joohyuk Chin Logo" draggable="false" />
+        </a>
+
+        <nav class="site-nav">
+            <button class="nav-btn about-btn" aria-label="About">
+                <img src="assets/ABOUT.svg" alt="About" draggable="false" />
+            </button>
+            <button class="nav-btn contact-btn" aria-label="Contact">
+                <img src="assets/CONTACT.svg" alt="Contact" draggable="false" />
+            </button>
+        </nav>
+
+        <button id="zoomBtn" class="plus-btn" aria-label="Toggle" aria-pressed="false">
+            <span class="glyph" aria-hidden="true">
+                <span class="bar h left"></span>
+                <span class="bar h right"></span>
+                <span class="bar v up"></span>
+                <span class="bar v down"></span>
+            </span>
+        </button>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle Night Mode">
+            <div class="indicator"></div>
+        </button>
+    </header>
+
+    <main data-barba="container" data-barba-namespace="item" style="--hero-ar: 1;">
+        <div class="content-wrapper">
+            <div class="hero no-gap concertina-interactive">
+                <div class="concertina-sequence-wrapper">
+                    <img class="concertina-sequence-img" src="assets/Concertina_sequence/Concertina0000.webp"
+                        alt="Concertina Animation" draggable="false" />
+                </div>
+            </div>
+
+            <div class="item-text">
+                <h2>Expressive Typography Concertina Publication</h2>
+                <p>An expressive typographic publication interpreting Margaret Atwood’s poem Tracking the Rain,
+                    exploring themes of dryness, waiting, and growing despair through repetition, distortion, and
+                    material experimentation.</p>
+            </div>
+        </div>
+
+
+        <!-- Draggable Mockup Image -->
+        <img id="draggableMockup" src="assets/Expressive Typography mock-up.webp" alt="Mockup" draggable="false" />
+
+        <a href="index.html" class="item-logo">
+            <img src="assets/logo.svg" alt="Back to Home" draggable="false" />
+        </a>
+    </main>
+
+    <!-- Scripts (load your JS at the end of body) -->
+    <script src="https://unpkg.com/@barba/core"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
