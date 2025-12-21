@@ -13,17 +13,22 @@ function updateThemeColor() {
   }
   meta.setAttribute('content', color);
 
-  // 2. Update color-scheme meta tag (if it exists)
+  // 2. Update color-scheme meta tag
   let schemeMeta = document.querySelector('meta[name="color-scheme"]');
   if (schemeMeta) {
     schemeMeta.setAttribute('content', scheme);
   }
 
-  // 3. Force system UI update via style (Critical for iOS Safari)
+  // 3. Apple-specific status bar toggle (Forces refresh)
+  let appleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+  if (appleMeta) {
+    appleMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
+  }
+
+  // 4. Force system UI update via style
   document.documentElement.style.colorScheme = scheme;
 
-  // Debug log
-  console.log('Status bar color updated to:', color, 'Scheme:', scheme);
+  console.log('Status bar synced:', color, scheme);
 }
 
 function initTheme() {

@@ -7,6 +7,7 @@
 }
 
 :root {
+  color-scheme: light;
   --bg-color: #f2f2f2;
   --text-color: #000;
   --invert: 0;
@@ -20,6 +21,7 @@
 }
 
 html.dark-mode {
+  color-scheme: dark;
   --bg-color: #131313;
   --text-color: #fff;
   --invert: 1;
