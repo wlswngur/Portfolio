@@ -1,59 +1,19 @@
+// Theme Logic
 function updateThemeColor() {
   const isDark = document.documentElement.classList.contains('dark-mode');
   const color = isDark ? '#131313' : '#f2f2f2';
-  const scheme = isDark ? 'dark' : 'light';
 
-  // 1. Force complete nuke and pave of meta tags (Safari often ignores attribute changes)
-  ['theme-color', 'color-scheme', 'apple-mobile-web-app-status-bar-style'].forEach(name => {
-    const existing = document.head.querySelectorAll(`meta[name="${name}"]`);
-    existing.forEach(el => el.remove());
-  });
+  // Remove existing meta tag and create new one to force Safari to update
+  let meta = document.getElementById('theme-color-meta');
+  if (meta) {
+    meta.remove();
+  }
 
-  // Small delay to ensure removal is registered
-  setTimeout(() => {
-    // 2. Re-add theme-color
-    const tcMeta = document.createElement('meta');
-    tcMeta.name = 'theme-color';
-    tcMeta.id = 'theme-color-meta';
-    tcMeta.content = color;
-    document.head.appendChild(tcMeta);
-
-    // 3. Re-add color-scheme
-    const csMeta = document.createElement('meta');
-    csMeta.name = 'color-scheme';
-    csMeta.content = scheme;
-    document.head.appendChild(csMeta);
-
-    // 4. Re-add Apple status bar style
-    const appleMeta = document.createElement('meta');
-    appleMeta.name = 'apple-mobile-web-app-status-bar-style';
-    appleMeta.content = isDark ? 'black' : 'default';
-    document.head.appendChild(appleMeta);
-
-    // 5. Force system UI update via style
-    document.documentElement.style.colorScheme = scheme;
-
-    // 6. TRICK: Severe layout tremor for iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) {
-      document.body.style.display = 'none';
-      void document.body.offsetHeight; // Force reflow
-      document.body.style.display = '';
-
-      // Simulate the Panel toggle which user says works
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-
-      setTimeout(() => {
-        const anyPanelOpen = document.querySelector('#aboutPanel.open, #contactPanel.open');
-        if (!anyPanelOpen) {
-          document.documentElement.style.overflow = '';
-          document.body.style.overflow = '';
-        }
-      }, 50);
-    }
-    console.log('Status bar hard-refreshed:', color);
-  }, 10);
+  meta = document.createElement('meta');
+  meta.name = 'theme-color';
+  meta.id = 'theme-color-meta';
+  meta.content = color;
+  document.head.appendChild(meta);
 }
 
 function initTheme() {
@@ -1868,9 +1828,6 @@ if (document.readyState === 'loading') {
 
 // Init on Barba transition (Changed to beforeEnter to fix animation timing)
 barba.hooks.beforeEnter((data) => {
-  // Ensure theme color is correct after navigation
-  updateThemeColor();
-
   // Check if we are on item namespace
   if (data.next.namespace === 'item') {
     const isMobile = window.innerWidth <= 600;
