@@ -59,6 +59,16 @@ body {
   transition: background 0.4s ease, color 0.4s ease;
 }
 
+/* Global scrollbar hiding for all elements */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
 body::-webkit-scrollbar {
   display: none;
 }
@@ -621,8 +631,8 @@ main[data-barba-namespace="item"] {
   width: 100%;
   height: 100dvh;
   position: relative;
-  overflow: hidden;
-  /* No scroll on main */
+  overflow: hidden !important;
+  /* Force hide scrollbar on main container */
   background: transparent;
 
   /* Default Aspect Ratio (Portrait A3) */
@@ -1143,6 +1153,8 @@ main[data-barba-namespace="item"] .item-logo img {
   main[data-barba-namespace="item"] .hero.video-hero {
     display: flex;
     flex-direction: row;
+    justify-content: flex-start;
+    /* Fix: Ensure scroll starts from left, avoiding Chrome center bug */
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
@@ -1205,7 +1217,7 @@ main[data-barba-namespace="item"] .item-logo img {
     border-radius: 50%;
     background: var(--text-color);
     opacity: 0.3;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.15s ease;
   }
 
   .swipe-indicator .dot.active {

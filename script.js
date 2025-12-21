@@ -684,6 +684,11 @@ barba.init({
         const heroSection = nextContainer.querySelector('.hero');
         if (heroSection) heroSection.style.overflow = 'hidden';
 
+        // Identify item ID to handle scrolling exceptions
+        const nextPath = data.next.url.path || window.location.pathname;
+        const match = nextPath.match(/item-(\d+)\.html/);
+        const nextItemId = match ? match[1] : null;
+
         // Ensure the new container overlaps the old one
         // Use FIXED position to keep it in the viewport regardless of current scroll
         // Hide immediately to prevent flicker before animation
@@ -695,7 +700,7 @@ barba.init({
           height: '100%', // Ensure it covers the screen
           zIndex: 1,
           opacity: 0, // Hide immediately to prevent flicker
-          overflowY: 'auto' // Allow internal scrolling if needed, though we disable it later
+          overflowY: (nextItemId === '2' || nextItemId === '3') ? 'auto' : 'hidden'
         });
 
         // Select main hero content, excluding mockup
@@ -1782,6 +1787,10 @@ function initMobileSwipeGallery() {
   const hero = document.querySelector('.hero.poster-hero, .hero.video-hero');
   if (!hero) return;
 
+  // Prevent multiple initializations on the same element
+  if (hero._swipeGalleryInit) return;
+  hero._swipeGalleryInit = true;
+
   // Indicator is now sibling of hero, inside content-wrapper
   const contentWrapper = hero.closest('.content-wrapper');
   const indicator = contentWrapper?.querySelector('.swipe-indicator');
@@ -1792,11 +1801,16 @@ function initMobileSwipeGallery() {
 
   let currentSlide = 0;
 
-  // Update when scroll passes 50% (Math.round does this naturally)
-  hero.addEventListener('scroll', () => {
+  // Symmetrical update logic
+  const updateIndicator = () => {
     const scrollLeft = hero.scrollLeft;
-    const slideWidth = hero.offsetWidth;
-    const newSlide = Math.round(scrollLeft / slideWidth);
+    const maxScroll = hero.scrollWidth - hero.clientWidth;
+
+    if (maxScroll <= 0) return;
+
+    // Use total scroll progress to determine slide index (perfectly symmetrical)
+    const progress = scrollLeft / maxScroll;
+    const newSlide = Math.round(progress * (dots.length - 1));
 
     if (newSlide !== currentSlide) {
       currentSlide = newSlide;
@@ -1804,7 +1818,15 @@ function initMobileSwipeGallery() {
         dot.classList.toggle('active', index === currentSlide);
       });
     }
-  }, { passive: true });
+  };
+
+  hero.addEventListener('scroll', updateIndicator, { passive: true });
+
+  // Ensure we start at the first slide (scrollLeft = 0)
+  hero.scrollLeft = 0;
+
+  // Single initial call to set correct state
+  updateIndicator();
 }
 
 // Init on load
