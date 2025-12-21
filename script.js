@@ -1,19 +1,29 @@
-// Theme Logic
 function updateThemeColor() {
   const isDark = document.documentElement.classList.contains('dark-mode');
   const color = isDark ? '#131313' : '#f2f2f2';
+  const scheme = isDark ? 'dark' : 'light';
 
-  // Remove existing meta tag and create new one to force Safari to update
+  // 1. Update theme-color meta tag
   let meta = document.getElementById('theme-color-meta');
-  if (meta) {
-    meta.remove();
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.id = 'theme-color-meta';
+    meta.name = 'theme-color';
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute('content', color);
+
+  // 2. Update color-scheme meta tag (if it exists)
+  let schemeMeta = document.querySelector('meta[name="color-scheme"]');
+  if (schemeMeta) {
+    schemeMeta.setAttribute('content', scheme);
   }
 
-  meta = document.createElement('meta');
-  meta.name = 'theme-color';
-  meta.id = 'theme-color-meta';
-  meta.content = color;
-  document.head.appendChild(meta);
+  // 3. Force system UI update via style (Critical for iOS Safari)
+  document.documentElement.style.colorScheme = scheme;
+
+  // Debug log
+  console.log('Status bar color updated to:', color, 'Scheme:', scheme);
 }
 
 function initTheme() {
@@ -1828,6 +1838,9 @@ if (document.readyState === 'loading') {
 
 // Init on Barba transition (Changed to beforeEnter to fix animation timing)
 barba.hooks.beforeEnter((data) => {
+  // Ensure theme color is correct after navigation
+  updateThemeColor();
+
   // Check if we are on item namespace
   if (data.next.namespace === 'item') {
     const isMobile = window.innerWidth <= 600;
