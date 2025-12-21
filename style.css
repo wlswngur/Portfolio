@@ -35,6 +35,7 @@ html.dark-mode {
 
 html {
   height: 100%;
+  background: var(--bg-color);
   overflow-y: auto;
   scroll-behavior: smooth;
   scrollbar-width: none;

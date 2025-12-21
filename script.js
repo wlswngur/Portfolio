@@ -3,49 +3,57 @@ function updateThemeColor() {
   const color = isDark ? '#131313' : '#f2f2f2';
   const scheme = isDark ? 'dark' : 'light';
 
-  // 1. Update theme-color meta tag
-  let meta = document.getElementById('theme-color-meta');
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.id = 'theme-color-meta';
-    meta.name = 'theme-color';
-    document.head.appendChild(meta);
-  }
-  meta.setAttribute('content', color);
+  // 1. Force complete nuke and pave of meta tags (Safari often ignores attribute changes)
+  ['theme-color', 'color-scheme', 'apple-mobile-web-app-status-bar-style'].forEach(name => {
+    const existing = document.head.querySelectorAll(`meta[name="${name}"]`);
+    existing.forEach(el => el.remove());
+  });
 
-  // 2. Update color-scheme meta tag
-  let schemeMeta = document.querySelector('meta[name="color-scheme"]');
-  if (schemeMeta) {
-    schemeMeta.setAttribute('content', scheme);
-  }
+  // Small delay to ensure removal is registered
+  setTimeout(() => {
+    // 2. Re-add theme-color
+    const tcMeta = document.createElement('meta');
+    tcMeta.name = 'theme-color';
+    tcMeta.id = 'theme-color-meta';
+    tcMeta.content = color;
+    document.head.appendChild(tcMeta);
 
-  // 3. Apple-specific status bar style
-  let appleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-  if (appleMeta) {
-    appleMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
-  }
+    // 3. Re-add color-scheme
+    const csMeta = document.createElement('meta');
+    csMeta.name = 'color-scheme';
+    csMeta.content = scheme;
+    document.head.appendChild(csMeta);
 
-  // 4. Force system UI update via style
-  document.documentElement.style.colorScheme = scheme;
+    // 4. Re-add Apple status bar style
+    const appleMeta = document.createElement('meta');
+    appleMeta.name = 'apple-mobile-web-app-status-bar-style';
+    appleMeta.content = isDark ? 'black' : 'default';
+    document.head.appendChild(appleMeta);
 
-  // 5. TRICK: iOS Safari Repaint Trigger
-  // User noted that opening/closing about/contact panels (which changes overflow/layout)
-  // fixes the status bar. We'll simulate a tiny layout shift here.
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (isIOS) {
-    document.documentElement.style.overflow = 'hidden';
-    void document.documentElement.offsetHeight; // Force reflow
-    setTimeout(() => {
-      // Restore overflow only if no panels are open
-      const anyPanelOpen = document.querySelector('#aboutPanel.open, #contactPanel.open');
-      if (!anyPanelOpen) {
-        document.documentElement.style.overflow = '';
-      }
-      console.log('iOS Repaint Triggered');
-    }, 10);
-  }
+    // 5. Force system UI update via style
+    document.documentElement.style.colorScheme = scheme;
 
-  console.log('Status bar synced:', color, scheme);
+    // 6. TRICK: Severe layout tremor for iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      document.body.style.display = 'none';
+      void document.body.offsetHeight; // Force reflow
+      document.body.style.display = '';
+
+      // Simulate the Panel toggle which user says works
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+
+      setTimeout(() => {
+        const anyPanelOpen = document.querySelector('#aboutPanel.open, #contactPanel.open');
+        if (!anyPanelOpen) {
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+        }
+      }, 50);
+    }
+    console.log('Status bar hard-refreshed:', color);
+  }, 10);
 }
 
 function initTheme() {
