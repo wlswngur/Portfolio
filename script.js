@@ -19,7 +19,7 @@ function updateThemeColor() {
     schemeMeta.setAttribute('content', scheme);
   }
 
-  // 3. Apple-specific status bar toggle (Forces refresh)
+  // 3. Apple-specific status bar style
   let appleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
   if (appleMeta) {
     appleMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
@@ -27,6 +27,23 @@ function updateThemeColor() {
 
   // 4. Force system UI update via style
   document.documentElement.style.colorScheme = scheme;
+
+  // 5. TRICK: iOS Safari Repaint Trigger
+  // User noted that opening/closing about/contact panels (which changes overflow/layout)
+  // fixes the status bar. We'll simulate a tiny layout shift here.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) {
+    document.documentElement.style.overflow = 'hidden';
+    void document.documentElement.offsetHeight; // Force reflow
+    setTimeout(() => {
+      // Restore overflow only if no panels are open
+      const anyPanelOpen = document.querySelector('#aboutPanel.open, #contactPanel.open');
+      if (!anyPanelOpen) {
+        document.documentElement.style.overflow = '';
+      }
+      console.log('iOS Repaint Triggered');
+    }, 10);
+  }
 
   console.log('Status bar synced:', color, scheme);
 }
