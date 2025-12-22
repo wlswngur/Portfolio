@@ -581,7 +581,7 @@ main {
     position: absolute;
     /* 절대 위치 해제 */
     justify-self: center;
-    left: 17%;
+    left: 18%;
     right: 40%;
     align-self: center;
     /* 세로 중앙 */
@@ -1002,7 +1002,7 @@ main[data-barba-namespace="item"] .item-logo img {
 
   /* Adjust text position for Concertina layout */
   /* Restore Fixed positioning but adjust Left based on the width above */
-  .hero.concertina-interactive+.item-text {
+  .hero.concertina-interactive~.item-text {
     position: fixed;
     /* Keep fixed as requested */
     left: calc(5vw + 30vw + 5vw);
@@ -1150,7 +1150,8 @@ main[data-barba-namespace="item"] .item-logo img {
 
   /* Hero becomes horizontal scroll container */
   main[data-barba-namespace="item"] .hero.poster-hero,
-  main[data-barba-namespace="item"] .hero.video-hero {
+  main[data-barba-namespace="item"] .hero.video-hero,
+  main[data-barba-namespace="item"] .hero.concertina-interactive {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
@@ -1165,7 +1166,8 @@ main[data-barba-namespace="item"] .item-logo img {
   }
 
   main[data-barba-namespace="item"] .hero.poster-hero::-webkit-scrollbar,
-  main[data-barba-namespace="item"] .hero.video-hero::-webkit-scrollbar {
+  main[data-barba-namespace="item"] .hero.video-hero::-webkit-scrollbar,
+  main[data-barba-namespace="item"] .hero.concertina-interactive::-webkit-scrollbar {
     display: none;
   }
 
@@ -1173,7 +1175,8 @@ main[data-barba-namespace="item"] .item-logo img {
   main[data-barba-namespace="item"] .hero.poster-hero>img,
   main[data-barba-namespace="item"] .hero.poster-hero>video,
   main[data-barba-namespace="item"] .hero.video-hero>img,
-  main[data-barba-namespace="item"] .hero.video-hero>video {
+  main[data-barba-namespace="item"] .hero.video-hero>video,
+  main[data-barba-namespace="item"] .hero.concertina-interactive .concertina-sequence-wrapper {
     flex: 0 0 100%;
     width: 100%;
     max-width: 100%;

@@ -1448,14 +1448,18 @@ function getConcertinaFrame() {
   return isConcertinaExpanded() ? CONCERTINA_FRAME_COUNT - 1 : 0;
 }
 
-// Preload all frames
+// Preload all frames with decoding to ensure smooth performance on mobile
 function preloadConcertinaFrames() {
   if (concertinaFramesLoaded) return;
   concertinaFramesLoaded = true;
 
   for (let i = 0; i < CONCERTINA_FRAME_COUNT; i++) {
     const img = new Image();
+    // Start decoding immediately to put image into GPU memory
     img.src = `assets/Concertina_sequence/Concertina${String(i).padStart(4, '0')}.webp`;
+    img.decode().catch(() => {
+      // Ignore errors (e.g. if the image is not yet in the DOM)
+    });
     concertinaFrames.push(img);
   }
 }
@@ -1536,8 +1540,8 @@ function toggleConcertina() {
     wrapper.style.overflowY = 'hidden';
   }
 
-  // Header duration (0.4s as requested)
-  if (header) {
+  // Header duration (0.4s as requested) - Skip on mobile
+  if (header && !isMobile) {
     gsap.to(header, { y: currentlyExpanded ? '0%' : '-100%', duration: 0.4, ease: "power2.inOut" });
   }
 
@@ -1557,16 +1561,17 @@ function toggleConcertina() {
     onUpdate: () => {
       // 1. Update image frame
       const f = Math.round(animState.frame);
-      if (concertinaFrames[f] && concertinaFrames[f].complete) {
+      // Use the pre-decoded frames for maximum stability
+      if (concertinaFrames[f]) {
         img.src = concertinaFrames[f].src;
       }
 
-      // 2. Update scroll position
-      wrapper.scrollTop = animState.scroll;
-
-      // 3. Update margins (crucial for jitter-free)
-      img.style.marginTop = animState.margin + 'px';
-      img.style.marginBottom = animState.margin + 'px';
+      // 2. Update scroll & margins - ONLY on desktop to prevent layout thrashing on mobile
+      if (!isMobile) {
+        wrapper.scrollTop = animState.scroll;
+        img.style.marginTop = animState.margin + 'px';
+        img.style.marginBottom = animState.margin + 'px';
+      }
     },
     onComplete: () => {
       const nextState = !currentlyExpanded;
@@ -1660,9 +1665,10 @@ barba.hooks.beforeEnter((data) => {
     // Reset scroll and setup state immediately before it shows
     setConcertinaImage();
 
-    // Specifically handle header visibility if already expanded
+    // Specifically handle header visibility if already expanded - Skip on mobile
     const header = document.querySelector('header');
-    if (header && isConcertinaExpanded()) {
+    const isMobile = window.innerWidth <= 600;
+    if (header && isConcertinaExpanded() && !isMobile) {
       gsap.set(header, { y: '-100%' });
     } else if (header) {
       gsap.set(header, { y: '0%' });
@@ -1784,7 +1790,7 @@ function initMobileSwipeGallery() {
   const isMobile = window.innerWidth <= 600;
   if (!isMobile) return;
 
-  const hero = document.querySelector('.hero.poster-hero, .hero.video-hero');
+  const hero = document.querySelector('.hero.poster-hero, .hero.video-hero, .hero.concertina-interactive');
   if (!hero) return;
 
   // Prevent multiple initializations on the same element
