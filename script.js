@@ -1728,30 +1728,49 @@ if (document.readyState === 'loading') {
   initConcertinaSequence();
 }
 
-// Initialize on Barba transitions
-// 1. BEFORE ENTER: Set correct state/scroll immediately so it doesn't flicker
+// -------------- Barba Hooks for Item 3 (Concertina) --------------
+// Reset concertina state whenever we navigate to a new item page
+function resetConcertinaState() {
+  // Reset flags so frames will be preloaded again if needed
+  isConcertinaReady = false;
+  concertinaFramesLoaded = false;
+  concertinaFrames = [];
+  // Start folded
+  concertinaExpanded = false;
+}
+
+// BEFORE ENTER: container is not yet attached – just reset state
 barba.hooks.beforeEnter((data) => {
-  // Only for item-3 page
+  if (data.next.namespace !== 'item') return;
   const wrapper = data.next.container.querySelector('.concertina-sequence-wrapper');
   if (wrapper) {
-    // Reset scroll and setup state immediately before it shows
-    setConcertinaImage();
-
-    // Specifically handle header visibility if already expanded - Skip on mobile
-    const header = document.querySelector('header');
-    const isMobile = window.innerWidth <= 600;
-    if (header && isConcertinaExpanded() && !isMobile) {
-      gsap.set(header, { y: '-100%' });
-    } else if (header) {
-      gsap.set(header, { y: '0%' });
-    }
+    resetConcertinaState();
+    // Ensure wrapper starts clean
+    wrapper.classList.remove('is-expanded');
+    wrapper.style.overflowY = 'hidden';
+    wrapper.scrollTop = 0;
   }
 });
 
-// 2. AFTER: Handle preloading and listeners
-barba.hooks.after(() => {
+// AFTER ENTER: container is now in the DOM – set image and attach listeners
+barba.hooks.afterEnter((data) => {
+  if (data.next.namespace !== 'item') return;
+  // Set the correct image for the initial (folded) state
+  setConcertinaImage();
+  // Ensure header is visible (skip on mobile as before)
+  const header = document.querySelector('header');
+  const isMobile = window.innerWidth <= 600;
+  if (header && !isMobile) {
+    gsap.set(header, { y: '0%' });
+  }
+  // Initialize listeners for this page (only once per page load)
   initConcertinaSequence();
 });
+
+// Remove the generic after hook that caused double‑initialisation
+// barba.hooks.after(() => {
+//   initConcertinaSequence();
+// });
 
 // =============================================================================
 // ITEM 3: DRAGGABLE MOCKUP LOGIC
