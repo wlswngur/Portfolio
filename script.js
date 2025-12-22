@@ -1596,6 +1596,9 @@ function addConcertinaClickHandler() {
   concertinaClickHandlerAdded = true;
 
   document.addEventListener('click', (e) => {
+    // Disable concertina toggle on mobile
+    if (window.innerWidth <= 600) return;
+
     // Only work on item-3 page
     if (!document.querySelector('.concertina-interactive')) return;
 
@@ -1608,6 +1611,9 @@ function addConcertinaClickHandler() {
 
 // Initialize Concertina on item-3 page
 function initConcertinaSequence() {
+  // Skip on mobile - concertina expand/collapse is disabled
+  if (window.innerWidth <= 600) return;
+
   const concertinaWrapper = document.querySelector('.concertina-sequence-wrapper');
   if (!concertinaWrapper) return;
 
@@ -1654,16 +1660,18 @@ if (document.readyState === 'loading') {
 // Initialize on Barba transitions
 // 1. BEFORE ENTER: Set correct state/scroll immediately so it doesn't flicker
 barba.hooks.beforeEnter((data) => {
+  // Skip on mobile
+  if (window.innerWidth <= 600) return;
+
   // Only for item-3 page
   const wrapper = data.next.container.querySelector('.concertina-sequence-wrapper');
   if (wrapper) {
     // Reset scroll and setup state immediately before it shows
     setConcertinaImage();
 
-    // Specifically handle header visibility if already expanded - Skip on mobile
+    // Specifically handle header visibility if already expanded
     const header = document.querySelector('header');
-    const isMobile = window.innerWidth <= 600;
-    if (header && isConcertinaExpanded() && !isMobile) {
+    if (header && isConcertinaExpanded()) {
       gsap.set(header, { y: '-100%' });
     } else if (header) {
       gsap.set(header, { y: '0%' });

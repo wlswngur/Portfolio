@@ -793,7 +793,7 @@ main[data-barba-namespace="item"] .hero>video {
   display: block;
 }
 
-main[data-barba-namespace="item"] .hero>img {
+main[data-barba-namespace="item"] .hero>img:not(#draggableMockup) {
   aspect-ratio: 1 / var(--hero-ar);
 }
 
@@ -969,7 +969,7 @@ main[data-barba-namespace="item"] .item-logo img {
     width: 100%;
     max-width: none;
     text-align: left;
-    padding: 10px 20px;
+    padding: 0 20px;
     flex-shrink: 0;
     touch-action: none;
     overscroll-behavior: none;
@@ -1162,7 +1162,7 @@ main[data-barba-namespace="item"] .item-logo img {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     gap: 0;
-    padding: 10px 0;
+    padding: 0;
   }
 
   main[data-barba-namespace="item"] .hero.poster-hero::-webkit-scrollbar,
@@ -1210,7 +1210,7 @@ main[data-barba-namespace="item"] .item-logo img {
     justify-content: center;
     align-items: center;
     gap: 8px;
-    padding: 15px 0;
+    padding: 0;
     flex-shrink: 0;
   }
 
