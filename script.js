@@ -1448,19 +1448,52 @@ function getConcertinaFrame() {
   return isConcertinaExpanded() ? CONCERTINA_FRAME_COUNT - 1 : 0;
 }
 
-// Preload all frames with decoding to ensure smooth performance on mobile
-function preloadConcertinaFrames() {
+// Loading State
+let isConcertinaReady = false;
+
+// Preload all frames with decoding and block interaction until done
+async function preloadConcertinaFrames() {
   if (concertinaFramesLoaded) return;
+
+  // Set flag but DON'T verify ready yet
   concertinaFramesLoaded = true;
+
+  const promises = [];
 
   for (let i = 0; i < CONCERTINA_FRAME_COUNT; i++) {
     const img = new Image();
-    // Start decoding immediately to put image into GPU memory
     img.src = `assets/Concertina_sequence/Concertina${String(i).padStart(4, '0')}.webp`;
-    img.decode().catch(() => {
-      // Ignore errors (e.g. if the image is not yet in the DOM)
+
+    // Create a promise for each image load & decode
+    const p = new Promise((resolve, reject) => {
+      img.onload = () => {
+        if ('decode' in img) {
+          img.decode().then(resolve).catch(resolve);
+        } else {
+          resolve();
+        }
+      };
+      img.onerror = resolve; // Fail gracefully
     });
+
     concertinaFrames.push(img);
+    promises.push(p);
+  }
+
+  // Wait for ALL images to be ready
+  try {
+    await Promise.all(promises);
+    isConcertinaReady = true;
+    console.log('All concertina frames loaded and decoded.');
+
+    // Optional: Visual cue that it's ready
+    const wrapper = document.querySelector('.concertina-sequence-wrapper');
+    if (wrapper) wrapper.style.cursor = 'pointer';
+
+  } catch (e) {
+    console.error('Error loading frames', e);
+    // Allow interaction anyway as fallback
+    isConcertinaReady = true;
   }
 }
 
@@ -1472,7 +1505,12 @@ function setConcertinaImage() {
 
   const expanded = isConcertinaExpanded();
   const frameIndex = getConcertinaFrame();
-  img.src = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
+  const targetSrc = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
+
+  // CRITICAL: Only update src if it's actually different to prevent re-render
+  if (!img.src.endsWith(targetSrc.split('/').pop())) {
+    img.src = targetSrc;
+  }
 
   // Constants for margin calculations - use different multiplier for mobile
   const isMobile = window.innerWidth <= 600;
@@ -1489,19 +1527,30 @@ function setConcertinaImage() {
   if (!expanded) {
     wrapper.classList.remove('is-expanded');
     wrapper.style.overflowY = 'hidden';
-    img.style.marginTop = marginFolded + 'px';
-    img.style.marginBottom = marginFolded + 'px';
+    if (!isMobile) {
+      img.style.marginTop = marginFolded + 'px';
+      img.style.marginBottom = marginFolded + 'px';
+    } else {
+      img.style.marginTop = '';
+      img.style.marginBottom = '';
+    }
   } else {
     wrapper.classList.add('is-expanded');
     wrapper.style.overflowY = 'auto';
-    img.style.marginTop = marginExpanded + 'px';
-    img.style.marginBottom = marginExpanded + 'px';
+    if (!isMobile) {
+      img.style.marginTop = marginExpanded + 'px';
+      img.style.marginBottom = marginExpanded + 'px';
+    } else {
+      img.style.marginTop = '';
+      img.style.marginBottom = '';
+    }
   }
 }
 
 // Animate between states
 function toggleConcertina() {
-  if (concertinaAnimating) return;
+  // STRICT CHECK: Do nothing if already animating OR if frames aren't fully loaded/decoded
+  if (concertinaAnimating || !isConcertinaReady) return;
 
   const wrapper = document.querySelector('.concertina-sequence-wrapper');
   const img = document.querySelector('.concertina-sequence-img');
@@ -1552,23 +1601,32 @@ function toggleConcertina() {
     margin: currentlyExpanded ? marginExpanded : marginFolded
   };
 
+  let lastFrameIndex = -1;
+
   gsap.to(animState, {
     frame: endFrame,
     scroll: currentlyExpanded ? 0 : targetScroll,
     margin: currentlyExpanded ? marginFolded : marginExpanded,
-    duration: 1,
+    duration: isMobile ? 1.5 : 1, // Slower on mobile to reduce flickering
     ease: "power2.inOut",
     onUpdate: () => {
-      // 1. Update image frame
+      // 1. Update image frame (Optimized: only update if frame changed AND src is different)
       const f = Math.round(animState.frame);
-      // Use the pre-decoded frames for maximum stability
-      if (concertinaFrames[f]) {
-        img.src = concertinaFrames[f].src;
+      if (f !== lastFrameIndex && concertinaFrames[f] && concertinaFrames[f].complete) {
+        const newSrc = concertinaFrames[f].src;
+        // Extra check: only assign if src is truly different
+        if (img.src !== newSrc) {
+          img.src = newSrc;
+        }
+        lastFrameIndex = f;
       }
 
-      // 2. Update scroll & margins - ONLY on desktop to prevent layout thrashing on mobile
+      // 2. Update scroll position
+      wrapper.scrollTop = animState.scroll;
+
+      // 3. Update margins (Desktop only to prevent reflow/flickering)
+      // Mobile uses CSS flex centering, so no margin manipulation is needed
       if (!isMobile) {
-        wrapper.scrollTop = animState.scroll;
         img.style.marginTop = animState.margin + 'px';
         img.style.marginBottom = animState.margin + 'px';
       }
@@ -1589,6 +1647,12 @@ function toggleConcertina() {
         wrapper.scrollTop = 0;
         wrapper.classList.remove('is-expanded');
       }
+
+      // Clean up margins on complete (remove inline styles on mobile)
+      if (isMobile) {
+        img.style.marginTop = '';
+        img.style.marginBottom = '';
+      }
     }
   });
 }
@@ -1604,8 +1668,16 @@ function addConcertinaClickHandler() {
     // Only work on item-3 page
     if (!document.querySelector('.concertina-interactive')) return;
 
-    // Ignore buttons, links, nav, header
+    // Check if the click is within the interactive wrapper
+    const interactiveArea = e.target.closest('.concertina-interactive');
+    if (!interactiveArea) return;
+
+    // Ignore buttons, links, nav, header WITHIN the area (though unlikely)
     if (e.target.closest('button, a, nav, header')) return;
+
+    // CRITICAL: Stop event from bubbling up to Barba or other handlers
+    e.preventDefault();
+    e.stopPropagation();
 
     toggleConcertina();
   });
