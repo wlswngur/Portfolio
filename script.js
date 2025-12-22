@@ -1860,23 +1860,29 @@ if (document.readyState === 'loading') {
   }
 }
 
-// Init on Barba transition - Use 'after' hook to ensure animation is complete
+// Init on Barba transition
+// Desktop: Use beforeEnter to position mockup before animation starts
+barba.hooks.beforeEnter((data) => {
+  if (data.next.namespace === 'item') {
+    const isMobile = window.innerWidth <= 600;
+    if (!isMobile) {
+      initDraggableMockup();
+    }
+  }
+});
+
+// Mobile: Use after hook to ensure animation is complete before resetting scroll
 barba.hooks.after((data) => {
-  // Check if we are on item namespace
   if (data.next.namespace === 'item') {
     const isMobile = window.innerWidth <= 600;
     if (isMobile) {
-      // Wait for animation to fully complete, then reset scroll
       setTimeout(() => {
         initMobileSwipeGallery();
-        // Force scroll to first slide after initialization
         const hero = document.querySelector('.hero.poster-hero, .hero.video-hero, .hero.concertina-interactive');
         if (hero) {
           hero.scrollLeft = 0;
         }
       }, 100);
-    } else {
-      initDraggableMockup();
     }
   }
 });
