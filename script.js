@@ -1460,8 +1460,11 @@ function preloadConcertinaFrames() {
   }
 }
 
-// Set image to current state (no animation)
+// Set image to current state (no animation) - Desktop only
 function setConcertinaImage() {
+  // Skip on mobile
+  if (window.innerWidth <= 600) return;
+
   const wrapper = document.querySelector('.concertina-sequence-wrapper');
   const img = document.querySelector('.concertina-sequence-img');
   if (!img || !wrapper) return;
@@ -1470,16 +1473,14 @@ function setConcertinaImage() {
   const frameIndex = getConcertinaFrame();
   img.src = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
 
-  // Constants for margin calculations - use different multiplier for mobile
-  const isMobile = window.innerWidth <= 600;
+  // Constants for margin calculations (desktop only)
   const vSpace = window.innerHeight;
   const v_a = vSpace - 144;
-  const multiplier = isMobile ? 2.0 : 1.4328;
-  const h_c = v_a * multiplier;
+  const h_c = v_a * 1.4328;
   const marginFolded = h_c * -0.151;
   const marginExpanded = h_c * -0.0067;
 
-  // Always reset scroll to top on entry - "스크롤 저장하지 않음"
+  // Always reset scroll to top on entry
   wrapper.scrollTop = 0;
 
   if (!expanded) {
@@ -1495,8 +1496,10 @@ function setConcertinaImage() {
   }
 }
 
-// Animate between states
+// Animate between states - Desktop only
 function toggleConcertina() {
+  // Skip on mobile (extra safety)
+  if (window.innerWidth <= 600) return;
   if (concertinaAnimating) return;
 
   const wrapper = document.querySelector('.concertina-sequence-wrapper');
@@ -1512,12 +1515,10 @@ function toggleConcertina() {
 
   concertinaAnimating = true;
 
-  // Constants for margin calculations - use different multiplier for mobile
-  const isMobile = window.innerWidth <= 600;
+  // Constants for margin calculations (desktop only)
   const vSpace = window.innerHeight;
   const v_a = vSpace - 144;
-  const multiplier = isMobile ? 2.0 : 1.4328;
-  const h_c = v_a * multiplier;
+  const h_c = v_a * 1.4328;
   const marginFolded = h_c * -0.151;
   const marginExpanded = h_c * -0.0067;
 
@@ -1528,16 +1529,14 @@ function toggleConcertina() {
 
   // Initial setup for expansion
   if (!currentlyExpanded && wrapper) {
-    // We keep overflow hidden DURING animation to prevent user scroll
     wrapper.style.overflowY = 'hidden';
     wrapper.classList.add('is-expanded');
   } else if (currentlyExpanded && wrapper) {
-    // We lock overflow immediately when starting to fold/reset
     wrapper.style.overflowY = 'hidden';
   }
 
-  // Header duration (0.4s as requested) - Skip on mobile
-  if (header && !isMobile) {
+  // Header animation
+  if (header) {
     gsap.to(header, { y: currentlyExpanded ? '0%' : '-100%', duration: 0.4, ease: "power2.inOut" });
   }
 
@@ -1796,13 +1795,23 @@ function initMobileSwipeGallery() {
   const hero = document.querySelector('.hero.poster-hero, .hero.video-hero, .hero.concertina-interactive');
   if (!hero) return;
 
-  // Prevent multiple initializations on the same element
+  // Always reset scroll to first slide on page entry (even if already initialized)
+  hero.scrollLeft = 0;
+
+  // Update indicator dots to reflect first slide
+  const contentWrapper = hero.closest('.content-wrapper');
+  const indicator = contentWrapper?.querySelector('.swipe-indicator');
+  if (indicator) {
+    const dots = indicator.querySelectorAll('.dot');
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === 0);
+    });
+  }
+
+  // Prevent multiple scroll listener attachments
   if (hero._swipeGalleryInit) return;
   hero._swipeGalleryInit = true;
 
-  // Indicator is now sibling of hero, inside content-wrapper
-  const contentWrapper = hero.closest('.content-wrapper');
-  const indicator = contentWrapper?.querySelector('.swipe-indicator');
   if (!indicator) return;
 
   const dots = indicator.querySelectorAll('.dot');
@@ -1830,12 +1839,6 @@ function initMobileSwipeGallery() {
   };
 
   hero.addEventListener('scroll', updateIndicator, { passive: true });
-
-  // Ensure we start at the first slide (scrollLeft = 0)
-  hero.scrollLeft = 0;
-
-  // Single initial call to set correct state
-  updateIndicator();
 }
 
 // Init on load
@@ -1857,16 +1860,21 @@ if (document.readyState === 'loading') {
   }
 }
 
-// Init on Barba transition (Changed to beforeEnter to fix animation timing)
-barba.hooks.beforeEnter((data) => {
+// Init on Barba transition - Use 'after' hook to ensure animation is complete
+barba.hooks.after((data) => {
   // Check if we are on item namespace
   if (data.next.namespace === 'item') {
     const isMobile = window.innerWidth <= 600;
     if (isMobile) {
-      // Delay to ensure DOM is ready
-      requestAnimationFrame(() => {
+      // Wait for animation to fully complete, then reset scroll
+      setTimeout(() => {
         initMobileSwipeGallery();
-      });
+        // Force scroll to first slide after initialization
+        const hero = document.querySelector('.hero.poster-hero, .hero.video-hero, .hero.concertina-interactive');
+        if (hero) {
+          hero.scrollLeft = 0;
+        }
+      }, 100);
     } else {
       initDraggableMockup();
     }

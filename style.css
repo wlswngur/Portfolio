@@ -1075,8 +1075,10 @@ main[data-barba-namespace="item"] .item-logo img {
   margin-bottom: calc((100dvh - 144px) * 1.4328 * -0.0067);
 }
 
-/* Mobile adjustments for Concertina (Item 3) */
+/* Mobile adjustments for Concertina (Item 3) - Simplified to match Item 1 */
 @media (max-width: 600px) {
+
+  /* Make wrapper fill height and center content, hide overflow for cropping */
   .concertina-sequence-wrapper {
     width: 100%;
     height: 100%;
@@ -1092,18 +1094,16 @@ main[data-barba-namespace="item"] .item-logo img {
     display: none;
   }
 
+  /* Image fits by height with negative margin to crop empty space from folded state */
+  /* Canvas is 1920, folded content is 1340. Empty space = (1920-1340)/2 = 290 per side */
+  /* Ratio = 290/1920 ≈ 0.151 or 15.1% of image height */
   .concertina-sequence-wrapper img {
-    /* Simple max dimensions for centering */
-    max-width: 90%;
-    max-height: 90%;
     width: auto;
-    height: auto;
-    margin: 0;
+    height: calc(100% / 0.7);
+    /* Scale up to compensate for cropped empty space (1340/1920 ≈ 0.7) */
+    max-height: none;
+    margin: 0 !important;
     object-fit: contain;
-  }
-
-  .concertina-sequence-wrapper.is-expanded img {
-    margin: 0;
   }
 }
 
