@@ -1448,52 +1448,15 @@ function getConcertinaFrame() {
   return isConcertinaExpanded() ? CONCERTINA_FRAME_COUNT - 1 : 0;
 }
 
-// Loading State
-let isConcertinaReady = false;
-
-// Preload all frames with decoding and block interaction until done
-async function preloadConcertinaFrames() {
+// Preload all frames
+function preloadConcertinaFrames() {
   if (concertinaFramesLoaded) return;
-
-  // Set flag but DON'T verify ready yet
   concertinaFramesLoaded = true;
-
-  const promises = [];
 
   for (let i = 0; i < CONCERTINA_FRAME_COUNT; i++) {
     const img = new Image();
     img.src = `assets/Concertina_sequence/Concertina${String(i).padStart(4, '0')}.webp`;
-
-    // Create a promise for each image load & decode
-    const p = new Promise((resolve, reject) => {
-      img.onload = () => {
-        if ('decode' in img) {
-          img.decode().then(resolve).catch(resolve);
-        } else {
-          resolve();
-        }
-      };
-      img.onerror = resolve; // Fail gracefully
-    });
-
     concertinaFrames.push(img);
-    promises.push(p);
-  }
-
-  // Wait for ALL images to be ready
-  try {
-    await Promise.all(promises);
-    isConcertinaReady = true;
-    console.log('All concertina frames loaded and decoded.');
-
-    // Optional: Visual cue that it's ready
-    const wrapper = document.querySelector('.concertina-sequence-wrapper');
-    if (wrapper) wrapper.style.cursor = 'pointer';
-
-  } catch (e) {
-    console.error('Error loading frames', e);
-    // Allow interaction anyway as fallback
-    isConcertinaReady = true;
   }
 }
 
@@ -1505,12 +1468,7 @@ function setConcertinaImage() {
 
   const expanded = isConcertinaExpanded();
   const frameIndex = getConcertinaFrame();
-  const targetSrc = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
-
-  // CRITICAL: Only update src if it's actually different to prevent re-render
-  if (!img.src.endsWith(targetSrc.split('/').pop())) {
-    img.src = targetSrc;
-  }
+  img.src = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
 
   // Constants for margin calculations - use different multiplier for mobile
   const isMobile = window.innerWidth <= 600;
@@ -1527,30 +1485,19 @@ function setConcertinaImage() {
   if (!expanded) {
     wrapper.classList.remove('is-expanded');
     wrapper.style.overflowY = 'hidden';
-    if (!isMobile) {
-      img.style.marginTop = marginFolded + 'px';
-      img.style.marginBottom = marginFolded + 'px';
-    } else {
-      img.style.marginTop = '';
-      img.style.marginBottom = '';
-    }
+    img.style.marginTop = marginFolded + 'px';
+    img.style.marginBottom = marginFolded + 'px';
   } else {
     wrapper.classList.add('is-expanded');
     wrapper.style.overflowY = 'auto';
-    if (!isMobile) {
-      img.style.marginTop = marginExpanded + 'px';
-      img.style.marginBottom = marginExpanded + 'px';
-    } else {
-      img.style.marginTop = '';
-      img.style.marginBottom = '';
-    }
+    img.style.marginTop = marginExpanded + 'px';
+    img.style.marginBottom = marginExpanded + 'px';
   }
 }
 
 // Animate between states
 function toggleConcertina() {
-  // STRICT CHECK: Do nothing if already animating OR if frames aren't fully loaded/decoded
-  if (concertinaAnimating || !isConcertinaReady) return;
+  if (concertinaAnimating) return;
 
   const wrapper = document.querySelector('.concertina-sequence-wrapper');
   const img = document.querySelector('.concertina-sequence-img');
@@ -1601,35 +1548,25 @@ function toggleConcertina() {
     margin: currentlyExpanded ? marginExpanded : marginFolded
   };
 
-  let lastFrameIndex = -1;
-
   gsap.to(animState, {
     frame: endFrame,
     scroll: currentlyExpanded ? 0 : targetScroll,
     margin: currentlyExpanded ? marginFolded : marginExpanded,
-    duration: isMobile ? 1.5 : 1, // Slower on mobile to reduce flickering
+    duration: 1,
     ease: "power2.inOut",
     onUpdate: () => {
-      // 1. Update image frame (Optimized: only update if frame changed AND src is different)
+      // 1. Update image frame
       const f = Math.round(animState.frame);
-      if (f !== lastFrameIndex && concertinaFrames[f] && concertinaFrames[f].complete) {
-        const newSrc = concertinaFrames[f].src;
-        // Extra check: only assign if src is truly different
-        if (img.src !== newSrc) {
-          img.src = newSrc;
-        }
-        lastFrameIndex = f;
+      if (concertinaFrames[f] && concertinaFrames[f].complete) {
+        img.src = concertinaFrames[f].src;
       }
 
       // 2. Update scroll position
       wrapper.scrollTop = animState.scroll;
 
-      // 3. Update margins (Desktop only to prevent reflow/flickering)
-      // Mobile uses CSS flex centering, so no margin manipulation is needed
-      if (!isMobile) {
-        img.style.marginTop = animState.margin + 'px';
-        img.style.marginBottom = animState.margin + 'px';
-      }
+      // 3. Update margins (crucial for jitter-free)
+      img.style.marginTop = animState.margin + 'px';
+      img.style.marginBottom = animState.margin + 'px';
     },
     onComplete: () => {
       const nextState = !currentlyExpanded;
@@ -1647,12 +1584,6 @@ function toggleConcertina() {
         wrapper.scrollTop = 0;
         wrapper.classList.remove('is-expanded');
       }
-
-      // Clean up margins on complete (remove inline styles on mobile)
-      if (isMobile) {
-        img.style.marginTop = '';
-        img.style.marginBottom = '';
-      }
     }
   });
 }
@@ -1668,16 +1599,8 @@ function addConcertinaClickHandler() {
     // Only work on item-3 page
     if (!document.querySelector('.concertina-interactive')) return;
 
-    // Check if the click is within the interactive wrapper
-    const interactiveArea = e.target.closest('.concertina-interactive');
-    if (!interactiveArea) return;
-
-    // Ignore buttons, links, nav, header WITHIN the area (though unlikely)
+    // Ignore buttons, links, nav, header
     if (e.target.closest('button, a, nav, header')) return;
-
-    // CRITICAL: Stop event from bubbling up to Barba or other handlers
-    e.preventDefault();
-    e.stopPropagation();
 
     toggleConcertina();
   });
@@ -1728,49 +1651,30 @@ if (document.readyState === 'loading') {
   initConcertinaSequence();
 }
 
-// -------------- Barba Hooks for Item 3 (Concertina) --------------
-// Reset concertina state whenever we navigate to a new item page
-function resetConcertinaState() {
-  // Reset flags so frames will be preloaded again if needed
-  isConcertinaReady = false;
-  concertinaFramesLoaded = false;
-  concertinaFrames = [];
-  // Start folded
-  concertinaExpanded = false;
-}
-
-// BEFORE ENTER: container is not yet attached – just reset state
+// Initialize on Barba transitions
+// 1. BEFORE ENTER: Set correct state/scroll immediately so it doesn't flicker
 barba.hooks.beforeEnter((data) => {
-  if (data.next.namespace !== 'item') return;
+  // Only for item-3 page
   const wrapper = data.next.container.querySelector('.concertina-sequence-wrapper');
   if (wrapper) {
-    resetConcertinaState();
-    // Ensure wrapper starts clean
-    wrapper.classList.remove('is-expanded');
-    wrapper.style.overflowY = 'hidden';
-    wrapper.scrollTop = 0;
+    // Reset scroll and setup state immediately before it shows
+    setConcertinaImage();
+
+    // Specifically handle header visibility if already expanded - Skip on mobile
+    const header = document.querySelector('header');
+    const isMobile = window.innerWidth <= 600;
+    if (header && isConcertinaExpanded() && !isMobile) {
+      gsap.set(header, { y: '-100%' });
+    } else if (header) {
+      gsap.set(header, { y: '0%' });
+    }
   }
 });
 
-// AFTER ENTER: container is now in the DOM – set image and attach listeners
-barba.hooks.afterEnter((data) => {
-  if (data.next.namespace !== 'item') return;
-  // Set the correct image for the initial (folded) state
-  setConcertinaImage();
-  // Ensure header is visible (skip on mobile as before)
-  const header = document.querySelector('header');
-  const isMobile = window.innerWidth <= 600;
-  if (header && !isMobile) {
-    gsap.set(header, { y: '0%' });
-  }
-  // Initialize listeners for this page (only once per page load)
+// 2. AFTER: Handle preloading and listeners
+barba.hooks.after(() => {
   initConcertinaSequence();
 });
-
-// Remove the generic after hook that caused double‑initialisation
-// barba.hooks.after(() => {
-//   initConcertinaSequence();
-// });
 
 // =============================================================================
 // ITEM 3: DRAGGABLE MOCKUP LOGIC

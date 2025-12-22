@@ -1056,10 +1056,6 @@ main[data-barba-namespace="item"] .item-logo img {
   display: block;
   pointer-events: none;
   flex-shrink: 0;
-  /* Prevent flickering */
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
   /* transition removed - will be handled by GSAP for perfect sync */
 
   /* DEFAULT (FOLDED): Content is 1340 of 1920. 
@@ -1081,19 +1077,13 @@ main[data-barba-namespace="item"] .item-logo img {
 
 /* Mobile adjustments for Concertina (Item 3) */
 @media (max-width: 600px) {
-
-  /* Fixed height wrapper to prevent layout shift during image swap */
   .concertina-sequence-wrapper {
-    width: 100% !important;
-    height: 100% !important;
-    display: flex !important;
+    width: 100%;
+    height: 100%;
+    display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    position: relative;
-    /* Contain layout */
-    contain: strict !important;
-    /* CRITICAL: Isolate layout to prevent text reflow */
   }
 
   /* Remove spacers on mobile */
@@ -1103,20 +1093,17 @@ main[data-barba-namespace="item"] .item-logo img {
   }
 
   .concertina-sequence-wrapper img {
-    /* Force image to occupy space even if src is loading */
-    width: 100% !important;
-    height: 100% !important;
-    max-width: none !important;
-    max-height: none !important;
-    margin: 0 !important;
+    /* Simple max dimensions for centering */
+    max-width: 90%;
+    max-height: 90%;
+    width: auto;
+    height: auto;
+    margin: 0;
     object-fit: contain;
-    display: block;
-    transform: translateZ(0);
-    /* Hardware accel */
   }
 
   .concertina-sequence-wrapper.is-expanded img {
-    margin: 0 !important;
+    margin: 0;
   }
 }
 
