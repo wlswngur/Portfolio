@@ -621,6 +621,38 @@ if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 
+// Global hook for memory cleanup & interaction lock
+barba.hooks.before((data) => {
+  // 2. Memory Leak Fix: Kill all GSAP tweens and ScrollTriggers
+  gsap.killTweensOf("*");
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach(t => t.kill());
+  }
+
+  // 5. Animation Lock: Disable pointer events globally
+  document.body.style.pointerEvents = 'none';
+  isAnimating = true;
+
+  // 2. Additional cleanup for window listeners (Issue 2)
+  const oldMockup = data.current.container?.querySelector('#draggableMockup');
+  if (oldMockup && oldMockup._resizeHandler) {
+    window.removeEventListener('resize', oldMockup._resizeHandler);
+  }
+});
+
+barba.hooks.after(() => {
+  // 5. Animation Lock: Re-enable pointer events
+  document.body.style.pointerEvents = '';
+  isAnimating = false;
+
+  // Global safety reset
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+  const header = document.querySelector('header');
+  if (header) header.style.marginRight = '';
+});
+
 barba.init({
   sync: true,
   debug: false,
@@ -632,17 +664,17 @@ barba.init({
       to: { namespace: 'item' },
       sync: true,
       leave(data) {
+        // 4. Capture scroll position as the VERY first thing (Issue 4)
+        savedScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
         // Disable interactions during animation
         isAnimating = true;
         const zoomBtn = document.getElementById('zoomBtn');
         if (zoomBtn) zoomBtn.style.pointerEvents = 'none';
 
-        // If we didn't come from a click (e.g. back button or direct nav), capture scroll here
-        if (!activeItem) {
-          savedScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.overflow = 'hidden';
-        }
+        // Lock scroll context
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
 
         document.body.classList.add('hero-scroll-disable');
 
@@ -1191,7 +1223,6 @@ barba.init({
           opacity: 1,
           duration: 0.3,
           onComplete: () => {
-            isAnimating = false;
             gsap.set(data.next.container, { clearProps: "all" });
           }
         });
@@ -1213,23 +1244,24 @@ barba.init({
 
         initGrid();
 
-        // Restore scroll position after grid initialization
+        // 4. Robust scroll restoration (Issue 4)
         if (isReturningFromItem && savedScrollY > 0) {
           const scrollTarget = savedScrollY;
 
-          requestAnimationFrame(() => {
+          const applyScroll = () => {
             document.body.scrollTop = scrollTarget;
             document.documentElement.scrollTop = scrollTarget;
             window.scrollTo(0, scrollTarget);
+          };
+
+          requestAnimationFrame(() => {
+            applyScroll();
             requestAnimationFrame(() => {
-              document.body.scrollTop = scrollTarget;
-              document.documentElement.scrollTop = scrollTarget;
-              window.scrollTo(0, scrollTarget);
-              setTimeout(() => {
-                document.body.scrollTop = scrollTarget;
-                document.documentElement.scrollTop = scrollTarget;
-                window.scrollTo(0, scrollTarget);
-              }, 10);
+              applyScroll();
+              // Safety timeout to ensure grid layout is finished and painted
+              setTimeout(applyScroll, 20);
+              setTimeout(applyScroll, 60);
+              savedScrollY = 0; // Reset after restoration
             });
           });
         }
@@ -1269,15 +1301,7 @@ barba.init({
   ]
 });
 
-// Safety net: Always reset animation state and scroll lock after any transition completes
-barba.hooks.after(() => {
-  isAnimating = false;
-  document.documentElement.style.overflow = '';
-  document.body.style.overflow = '';
-  document.body.style.paddingRight = '';
-  const header = document.querySelector('header');
-  if (header) header.style.marginRight = '';
-});
+// --- Moved Safety net is now in barba.hooks.after above ---
 
 // Initial check on first load
 if (document.getElementById("grid")) {
@@ -1789,8 +1813,12 @@ function initDraggableMockup() {
     mockup.onload = positionMockup;
   }
 
-  // Reposition on resize
-  window.addEventListener('resize', positionMockup);
+  // 2. Memory Leak Fix: Use a named function for resize so we can remove it (Issue 2)
+  const onMockupResize = () => positionMockup();
+  window.addEventListener('resize', onMockupResize);
+
+  // Store reference for Barba cleanup
+  mockup._resizeHandler = onMockupResize;
 
   // Stop propagation on click to prevent Concertina activation
   mockup.addEventListener('click', (e) => {
