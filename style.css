@@ -320,7 +320,7 @@ main {
   margin-top: 8px;
   font-family: "Inter", sans-serif;
   font-weight: 600;
-  font-size: 12px;
+  font-size: clamp(11px, 0.8vw, 15px);
   color: var(--text-color);
   pointer-events: none;
   opacity: 1;
