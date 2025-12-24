@@ -749,8 +749,14 @@ barba.init({
 
         // Fallback if no active item or target image
         if (!activeItem || !targetImg) {
-          const tl = gsap.timeline();
-          tl.from(nextContainer, { opacity: 0, duration: 0.5 });
+          const tl = gsap.timeline({
+            onComplete: () => {
+              isAnimating = false;
+              gsap.set(nextContainer, { clearProps: "all" });
+            }
+          });
+          gsap.set(nextContainer, { opacity: 0 });
+          tl.to(nextContainer, { opacity: 1, duration: 0.5 });
 
           // Fallback에서도 item-text 애니메이션 적용
           const itemText = nextContainer.querySelector('.item-text');
@@ -777,8 +783,14 @@ barba.init({
           clone.style.opacity = '1'; // Make it visible
         } else {
           // Fallback if clone wasn't created (shouldn't happen)
-          const tl = gsap.timeline();
-          tl.from(nextContainer, { opacity: 0, duration: 0.5 });
+          const tl = gsap.timeline({
+            onComplete: () => {
+              isAnimating = false;
+              gsap.set(nextContainer, { clearProps: "all" });
+            }
+          });
+          gsap.set(nextContainer, { opacity: 0 });
+          tl.to(nextContainer, { opacity: 1, duration: 0.5 });
 
           // Fallback에서도 item-text 애니메이션 적용
           const itemText = nextContainer.querySelector('.item-text');
@@ -1000,7 +1012,14 @@ barba.init({
         }
 
         if (!sourceImg || !targetItem) {
-          return gsap.from(nextContainer, { opacity: 0, duration: 0.5 });
+          return gsap.to(nextContainer, {
+            opacity: 1,
+            duration: 0.5,
+            onComplete: () => {
+              isAnimating = false;
+              gsap.set(nextContainer, { clearProps: "all" });
+            }
+          });
         }
 
         const startRect = sourceImg.getBoundingClientRect();
@@ -1165,11 +1184,17 @@ barba.init({
         return gsap.to(data.current.container, { opacity: 0, duration: 0.3 });
       },
       enter(data) {
-        return gsap.from(data.next.container, { opacity: 0, duration: 0.3 });
+        return gsap.to(data.next.container, {
+          opacity: 1,
+          duration: 0.3,
+          onComplete: () => {
+            isAnimating = false;
+            gsap.set(data.next.container, { clearProps: "all" });
+          }
+        });
       }
     }
   ],
-
   views: [
     {
       namespace: 'home',
@@ -1239,6 +1264,16 @@ barba.init({
       }
     }
   ]
+});
+
+// Safety net: Always reset animation state and scroll lock after any transition completes
+barba.hooks.after(() => {
+  isAnimating = false;
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+  const header = document.querySelector('header');
+  if (header) header.style.marginRight = '';
 });
 
 // Initial check on first load
