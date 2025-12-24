@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f2f2f2" id="theme-color-meta" />
-    <title>Portfolio - Item 3</title>
+    <title>Portfolio - Book Cover</title>
     <link rel="icon" href="assets/favicon111.svg" type="favicon.svg">
     <!-- Inter font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,28 +45,42 @@
         </button>
     </header>
 
-    <main data-barba="container" data-barba-namespace="item" style="--hero-ar: 1;">
+    <main data-barba="container" data-barba-namespace="item" data-id="2" style="--hero-ar: 1; margin: 0; padding: 0;">
         <div class="content-wrapper">
-            <div class="hero no-gap concertina-interactive">
-                <div class="concertina-sequence-wrapper">
-                    <img class="concertina-sequence-img" src="assets/Concertina_sequence/Concertina0000.webp"
-                        alt="Concertina Animation" draggable="false" />
+            <div class="hero no-gap">
+                <div class="first-image-wrapper">
+                    <img src="assets/Book_Mockup.webp" alt="Book Cover" draggable="false" />
                 </div>
-                <!-- Mockup Image (swipeable on mobile) -->
-                <img id="draggableMockup" src="assets/Expressive Typography mock-up.webp" alt="Mockup"
-                    draggable="false" />
-            </div>
 
-            <div class="swipe-indicator">
-                <span class="dot active"></span>
-                <span class="dot"></span>
+                <!-- 책 1: 360도 회전 스크롤텔링 -->
+                <div class="book-sequence-container" data-book="1">
+                    <div class="book-sequence-sticky">
+                        <img class="book-sequence-img" data-book="1" src="assets/book_sequence_1/Book_10001.webp"
+                            alt="Book 1 360 View" draggable="false" />
+                    </div>
+                </div>
+
+                <!-- 책 2: 360도 회전 스크롤텔링 -->
+                <div class="book-sequence-container" data-book="2">
+                    <div class="book-sequence-sticky">
+                        <img class="book-sequence-img" data-book="2" src="assets/book_sequence_ 2/Book_10001.webp"
+                            alt="Book 2 360 View" draggable="false" />
+                    </div>
+                </div>
+
+                <!-- 책 3: 360도 회전 스크롤텔링 -->
+                <div class="book-sequence-container" data-book="3">
+                    <div class="book-sequence-sticky">
+                        <img class="book-sequence-img" data-book="3" src="assets/book_sequence_3/Book_30001.webp"
+                            alt="Book 3 360 View" draggable="false" />
+                    </div>
+                </div>
             </div>
 
             <div class="item-text">
-                <h2>Expressive Typography Concertina Publication</h2>
-                <p>An expressive typographic publication interpreting Margaret Atwood’s poem Tracking the Rain,
-                    exploring themes of dryness, waiting, and growing despair through repetition, distortion, and
-                    material experimentation.</p>
+                <h2>Carlo Rovelli Popular Science Series Cover Design</h2>
+                <p>A conceptual cover design project to establish a cohesive graphic system for three bestsellers by
+                    Carlo Rovelli.</p>
             </div>
         </div>
 

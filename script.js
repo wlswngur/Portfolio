@@ -730,10 +730,8 @@ barba.init({
           hero.style.scrollSnapType = 'none'; // Prevent snapping interference
         }
 
-        // Identify item ID to handle scrolling exceptions
-        const nextPath = data.next.url.path || window.location.pathname;
-        const match = nextPath.match(/item-(\d+)\.html/);
-        const nextItemId = match ? match[1] : null;
+        // Identify item ID from data-id attribute
+        const nextItemId = nextContainer.getAttribute('data-id');
 
         // Ensure the new container overlaps the old one
         // Use FIXED position to keep it in the viewport regardless of current scroll
@@ -1007,10 +1005,8 @@ barba.init({
           data.current.container.querySelector('.hero > video') ||
           data.current.container.querySelector('.hero img:not(#draggableMockup)');
 
-        // Find the target item ID from the URL
-        const currentPath = data.current.url.path || window.location.pathname;
-        const match = currentPath.match(/item-(\d+)\.html/);
-        const itemId = match ? match[1] : null;
+        // Find the target item ID from the container's data-id attribute
+        const itemId = data.current.container.getAttribute('data-id');
 
         // Find the target image in the grid (인덱스에서는 모두 이미지)
         let targetItem = null;
