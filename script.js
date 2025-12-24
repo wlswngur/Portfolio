@@ -44,7 +44,7 @@ let zoomBtn = document.getElementById("zoomBtn");
 let items = [];
 
 const GAP_MAP = { 1: 28, 3: 24, 5: 20 };
-const MIN_ITEM = { 1: 280, 3: 220, 5: 180 };
+const MIN_ITEM = { 1: 280, 3: 240, 5: 200 };
 
 let layout = 1;
 let zoomDir = -1;

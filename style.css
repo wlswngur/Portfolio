@@ -270,8 +270,17 @@ main {
 
 .grid {
   position: relative;
-  width: 90%;
+  width: 92%;
   max-width: 1400px;
+  /* Default for smaller desktops */
+}
+
+/* For larger screens like 15" Air or larger monitors */
+@media (min-width: 1550px) {
+  .grid {
+    width: 94%;
+    max-width: 1750px;
+  }
 }
 
 .item {
