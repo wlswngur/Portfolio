@@ -5,7 +5,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f2f2f2" id="theme-color-meta" />
-    <title>Portfolio - Poster</title>
+    <title>Poster | Joohyuk Chin Portfolio</title>
+    <meta name="description"
+        content="Waraburra Nura Promotional Poster - A marketing poster designed to promote the UTS Indigenous medicinal plant garden." />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Poster | Joohyuk Chin Portfolio" />
+    <meta property="og:description"
+        content="Waraburra Nura Promotional Poster - A marketing poster designed to promote the UTS Indigenous medicinal plant garden." />
+    <meta property="og:image" content="https://joohyukchin.com/assets/87631%20Poster.webp" />
+
     <link rel="icon" href="assets/favicon111.svg" type="favicon.svg">
     <!-- Inter font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,6 +24,15 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="style.css" />
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
 </head>
 
 <body data-barba="wrapper">
