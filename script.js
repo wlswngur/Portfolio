@@ -52,6 +52,12 @@ let activeItem = null;
 let savedScrollY = 0;
 let isAnimating = false; // Track animation state
 
+const CONCERTINA_FRAME_COUNT = 61; // 0000 to 0060
+let concertinaFramesLoaded = false;
+let concertinaFrames = [];
+let concertinaAnimating = false;
+let concertinaExpanded = false;
+
 let activeItemRect = null;
 let transitionClone = null;
 
@@ -62,52 +68,14 @@ document.addEventListener('click', (e) => {
   if (itemLink && itemLink.tagName === 'A') {
     activeItem = itemLink.querySelector('img');
     if (activeItem) {
-      // Get computed style to check object-fit
-      const computedStyle = window.getComputedStyle(activeItem);
-      const objectFit = computedStyle.objectFit;
-
-      let cloneRect;
-
-      if (objectFit === 'contain') {
-        // For contain images, calculate the actual visible image bounds
-        const containerRect = activeItem.getBoundingClientRect();
-        const naturalWidth = activeItem.naturalWidth || 1;
-        const naturalHeight = activeItem.naturalHeight || 1;
-        const containerRatio = containerRect.width / containerRect.height;
-        const imageRatio = naturalWidth / naturalHeight;
-
-        let visibleWidth, visibleHeight, offsetX, offsetY;
-
-        if (imageRatio > containerRatio) {
-          // Image is wider - width fills container
-          visibleWidth = containerRect.width;
-          visibleHeight = containerRect.width / imageRatio;
-          offsetX = 0;
-          offsetY = (containerRect.height - visibleHeight) / 2;
-        } else {
-          // Image is taller - height fills container
-          visibleHeight = containerRect.height;
-          visibleWidth = containerRect.height * imageRatio;
-          offsetX = (containerRect.width - visibleWidth) / 2;
-          offsetY = 0;
-        }
-
-        cloneRect = {
-          top: containerRect.top + offsetY,
-          left: containerRect.left + offsetX,
-          width: visibleWidth,
-          height: visibleHeight
-        };
-      } else {
-        // For cover images, use the container bounds
-        const rect = activeItem.getBoundingClientRect();
-        cloneRect = {
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height
-        };
-      }
+      // For all items (like Item 1), use the container bounds
+      const rect = activeItem.getBoundingClientRect();
+      const cloneRect = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height
+      };
 
       activeItemRect = cloneRect;
 
@@ -227,12 +195,19 @@ function layoutPositions(columns) {
     // Add extra vertical spacing for labels (e.g. 30px)
     let y = row * (itemHeight + gap + 30);
 
-    // Special handling for Item 1 (Index 0)
-    if (i === 0) {
-      // Maintain A3 Aspect Ratio (Portrait) based on HEIGHT
-      // Height is fixed to the square's height (itemHeight)
-      // Width = Height / Ratio
-      width = height / ASPECT_RATIO;
+    // Special handling for items with specific aspect ratios (1, 3, 4)
+    // Matches the container size to the image size to prevent cropping and simplify transitions
+    const id = items[i].getAttribute('data-id');
+    if (id === '1' || id === '3' || id === '4') {
+      let ratio = ASPECT_RATIO;
+      if (id === '3') {
+        // Folded: 1920/1340 ≈ 1.4328, Expanded: 1920/1894 ≈ 1.0137
+        ratio = isConcertinaExpanded() ? 1.0137 : 1.4328;
+      }
+      if (id === '4') ratio = 1.7778;
+
+      // Maintain Aspect Ratio (Portrait) based on HEIGHT
+      width = height / ratio;
 
       // Center the narrower item within the cell
       x += (cellWidth - width) / 2;
@@ -288,6 +263,16 @@ function initGrid() {
     // Preserve layout unless it exceeds max allowed
     if (layout > maxAllowed) {
       layout = maxAllowed;
+    }
+  }
+
+  // Update Item 3 thumbnail to match concertina state
+  const item3 = items.find(item => item.getAttribute('data-id') === '3');
+  if (item3) {
+    const img = item3.querySelector('img');
+    if (img) {
+      const frameIndex = isConcertinaExpanded() ? CONCERTINA_FRAME_COUNT - 1 : 0;
+      img.src = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
     }
   }
 
@@ -368,8 +353,41 @@ function waitForClose(panel, callback) {
   panel.addEventListener('transitionend', handler);
 }
 
+// Swipe up to close panels on mobile
+function initSwipeToClose(panel, closeFn) {
+  let touchStartY = 0;
+
+  panel.addEventListener('touchstart', (e) => {
+    touchStartY = e.changedTouches[0].screenY;
+  }, {
+    passive: true
+  });
+
+  panel.addEventListener('touchend', (e) => {
+    const touchEndY = e.changedTouches[0].screenY;
+    const swipeDistance = touchStartY - touchEndY; // Positive if swiped up
+
+    // Threshold 50px for mobile
+    if (swipeDistance > 50 && window.innerWidth <= 600) {
+      if (panel.classList.contains('open')) {
+        closeFn();
+      }
+    }
+  }, {
+    passive: true
+  });
+}
+
+if (aboutPanel) initSwipeToClose(aboutPanel, closeAboutPanel);
+if (contactPanel) initSwipeToClose(contactPanel, closeContactPanel);
+
 function openAboutPanel() {
   if (!aboutPanel) return;
+
+  // Lock scroll (html + body) IMMEDIATELY
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
   if (contactPanel && (contactPanel.classList.contains('open') || !contactPanel.hidden)) {
     waitForClose(contactPanel, () => {
       aboutPanel.hidden = false;
@@ -386,9 +404,6 @@ function openAboutPanel() {
     closeContactPanel(true); // keepScroll = true
     return;
   }
-  // Lock scroll (html + body)
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
 
   aboutPanel.hidden = false;
   aboutPanel.setAttribute('aria-hidden', 'false');
@@ -418,6 +433,11 @@ function closeAboutPanel(keepScroll = false) {
 
 function openContactPanel() {
   if (!contactPanel) return;
+
+  // Lock scroll (html + body) IMMEDIATELY
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
   if (aboutPanel && (aboutPanel.classList.contains('open') || !aboutPanel.hidden)) {
     waitForClose(aboutPanel, () => {
       contactPanel.hidden = false;
@@ -434,9 +454,6 @@ function openContactPanel() {
     closeAboutPanel(true); // keepScroll = true
     return;
   }
-  // Lock scroll (html + body)
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
 
   contactPanel.hidden = false;
   contactPanel.setAttribute('aria-hidden', 'false');
@@ -666,6 +683,26 @@ barba.init({
 
         const nextContainer = data.next.container;
 
+        // --- NEW: Reset hero scroll and hide mockup as early as possible ---
+        const isMobileTransition = window.innerWidth <= 600;
+        const hero = nextContainer.querySelector('.hero');
+        const mockup = nextContainer.querySelector('#draggableMockup');
+
+        if (mockup) {
+          if (isMobileTransition) {
+            gsap.set(mockup, { display: 'none' });
+          } else {
+            gsap.set(mockup, { opacity: 0 });
+          }
+        }
+        if (hero) {
+          hero.scrollLeft = 0;
+          // Reinforce on next frames to fight browser scroll restoration
+          requestAnimationFrame(() => { if (hero) hero.scrollLeft = 0; });
+          setTimeout(() => { if (hero) hero.scrollLeft = 0; }, 50);
+        }
+        // -------------------------------------------------------------------
+
         // Helper to get scrollbar width
         const getScrollbarWidth = () => window.innerWidth - document.documentElement.clientWidth;
         const scrollbarWidth = getScrollbarWidth();
@@ -681,8 +718,10 @@ barba.init({
         }
 
         // Disable hero scroll during animation
-        const heroSection = nextContainer.querySelector('.hero');
-        if (heroSection) heroSection.style.overflow = 'hidden';
+        if (hero) {
+          hero.style.overflow = 'hidden';
+          hero.style.scrollSnapType = 'none'; // Prevent snapping interference
+        }
 
         // Identify item ID to handle scrolling exceptions
         const nextPath = data.next.url.path || window.location.pathname;
@@ -700,7 +739,7 @@ barba.init({
           height: '100%', // Ensure it covers the screen
           zIndex: 1,
           opacity: 0, // Hide immediately to prevent flicker
-          overflowY: (nextItemId === '2' || nextItemId === '3') ? 'auto' : 'hidden'
+          overflowY: 'hidden'
         });
 
         // Select main hero content, excluding mockup
@@ -769,6 +808,9 @@ barba.init({
             // Wait for layout to update
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
+                // Final safety scroll reset before measuring
+                if (hero) hero.scrollLeft = 0;
+
                 // Force layout recalculation
                 let endRect = targetImg.getBoundingClientRect();
 
@@ -811,10 +853,22 @@ barba.init({
                     if (zoomBtn) zoomBtn.style.pointerEvents = 'auto';
 
                     const heroSection = nextContainer.querySelector('.hero');
-                    if (heroSection) heroSection.style.overflow = 'auto';
+                    if (heroSection) {
+                      heroSection.style.overflow = 'auto';
+                      heroSection.style.scrollSnapType = ''; // Restore snap
+                    }
 
                     const itemText = nextContainer.querySelector('.item-text');
                     if (itemText) gsap.set(itemText, { clearProps: "all" });
+
+                    // Restore mockup (make it exist in layout again)
+                    if (mockup) {
+                      if (isMobileTransition) {
+                        gsap.set(mockup, { display: 'block' });
+                      } else {
+                        gsap.to(mockup, { opacity: 1, duration: 0.4 });
+                      }
+                    }
 
                     // 5. Show target and remove clone atomically
                     gsap.set(targetImg, { opacity: 1 });
@@ -943,12 +997,6 @@ barba.init({
         let targetItem = null;
         if (itemId) {
           targetItem = nextContainer.querySelector(`.item[data-id="${itemId}"] img`);
-
-          // For item 3: Update thumbnail with current Concertina frame
-          if (itemId === '3' && isConcertinaExpanded()) {
-            const lastFrameSrc = `assets/Concertina_sequence/Concertina${String(CONCERTINA_FRAME_COUNT - 1).padStart(4, '0')}.webp`;
-            targetItem.src = lastFrameSrc;
-          }
         }
 
         if (!sourceImg || !targetItem) {
@@ -1024,43 +1072,7 @@ barba.init({
               // Force grid update to match current viewport state (with padding correction)
               initGrid();
 
-              // Calculate end position after scroll is restored and layout updated
-              // For item 3 (contain images), calculate actual visible bounds
-              const targetComputedStyle = window.getComputedStyle(targetItem);
-              const targetObjectFit = targetComputedStyle.objectFit;
-
-              let endRect;
-
-              if (targetObjectFit === 'contain') {
-                const containerRect = targetItem.getBoundingClientRect();
-                const naturalWidth = targetItem.naturalWidth || 1;
-                const naturalHeight = targetItem.naturalHeight || 1;
-                const containerRatio = containerRect.width / containerRect.height;
-                const imageRatio = naturalWidth / naturalHeight;
-
-                let visibleWidth, visibleHeight, offsetX, offsetY;
-
-                if (imageRatio > containerRatio) {
-                  visibleWidth = containerRect.width;
-                  visibleHeight = containerRect.width / imageRatio;
-                  offsetX = 0;
-                  offsetY = (containerRect.height - visibleHeight) / 2;
-                } else {
-                  visibleHeight = containerRect.height;
-                  visibleWidth = containerRect.height * imageRatio;
-                  offsetX = (containerRect.width - visibleWidth) / 2;
-                  offsetY = 0;
-                }
-
-                endRect = {
-                  top: containerRect.top + offsetY,
-                  left: containerRect.left + offsetX,
-                  width: visibleWidth,
-                  height: visibleHeight
-                };
-              } else {
-                endRect = targetItem.getBoundingClientRect();
-              }
+              let endRect = targetItem.getBoundingClientRect();
 
               const tl = gsap.timeline({
                 onComplete: () => {
@@ -1425,14 +1437,9 @@ if (document.readyState === 'loading') {
 // ITEM 3: CONCERTINA CLICK SEQUENCE ANIMATION (Simplified & Robust)
 // =============================================================================
 
-const CONCERTINA_FRAME_COUNT = 61; // 0000 to 0060
-let concertinaFramesLoaded = false;
-let concertinaFrames = [];
-let concertinaAnimating = false;
-
 // State: false = folded, true = expanded
 // Uses variable (not sessionStorage) so it resets on page refresh but persists during Barba navigations
-let concertinaExpanded = false;
+// concertinaExpanded defined at top
 
 // Simple state functions
 function isConcertinaExpanded() {
@@ -1461,12 +1468,12 @@ function preloadConcertinaFrames() {
 }
 
 // Set image to current state (no animation) - Desktop only
-function setConcertinaImage() {
+function setConcertinaImage(container = document) {
   // Skip on mobile
   if (window.innerWidth <= 600) return;
 
-  const wrapper = document.querySelector('.concertina-sequence-wrapper');
-  const img = document.querySelector('.concertina-sequence-img');
+  const wrapper = container.querySelector('.concertina-sequence-wrapper');
+  const img = container.querySelector('.concertina-sequence-img');
   if (!img || !wrapper) return;
 
   const expanded = isConcertinaExpanded();
@@ -1666,7 +1673,7 @@ barba.hooks.beforeEnter((data) => {
   const wrapper = data.next.container.querySelector('.concertina-sequence-wrapper');
   if (wrapper) {
     // Reset scroll and setup state immediately before it shows
-    setConcertinaImage();
+    setConcertinaImage(data.next.container);
 
     // Specifically handle header visibility if already expanded
     const header = document.querySelector('header');

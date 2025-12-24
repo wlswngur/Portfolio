@@ -344,14 +344,12 @@ main {
 /* Item 3 특별 스타일 - 가로로 긴 Concertina 이미지용 */
 .item[data-id="3"] img {
   object-fit: contain;
-  /* 가로가 긴 이미지를 정사각형 안에 contain으로 표시 */
   background: transparent;
 }
 
 /* Item 4 특별 스타일 - 세로로 긴 이미지용 */
 .item[data-id="4"] img {
   object-fit: contain;
-  /* 비율 유지하면서 상하 꽉 채우기 */
   background: transparent;
 }
 
@@ -776,7 +774,7 @@ main[data-barba-namespace="item"] .hero.no-gap {
 
   main[data-barba-namespace="item"] .first-image-wrapper img {
     max-width: 100%;
-    max-height: 80%;
+    max-height: 100%;
     /* 이미지가 너무 크지 않게 */
     width: auto;
     height: auto;
