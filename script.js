@@ -511,10 +511,17 @@ zoomBtn.addEventListener("click", (e) => {
     return;
   }
 
-  // 2. If no grid (Item Page), go back
-  if (!document.getElementById("grid")) {
+  // 2. If no grid or in item namespace (Item Page), go back
+  const isItemPage = !document.getElementById("grid") ||
+    (typeof barba !== 'undefined' && barba.history.current && barba.history.current.namespace === 'item');
+
+  if (isItemPage) {
     e.preventDefault();
-    barba.go('/index.html');
+    if (typeof barba !== 'undefined') {
+      barba.go('index.html');
+    } else {
+      window.location.href = 'index.html';
+    }
     return;
   }
 
