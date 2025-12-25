@@ -522,9 +522,9 @@ zoomBtn.addEventListener("click", (e) => {
   if (isItemPage) {
     e.preventDefault();
     if (typeof barba !== 'undefined') {
-      barba.go('index.html');
+      barba.go('/');
     } else {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }
     return;
   }
