@@ -976,13 +976,10 @@ barba.init({
             });
           };
 
-          // Wait for image to load if needed
-          if (targetImg.complete) {
-            runAnimation();
-          } else {
-            targetImg.onload = runAnimation;
-            setTimeout(runAnimation, 100);
-          }
+          // Ensure layout settlement and asset readiness (consistent for all browsers/items)
+          // Item 4 (video) worked because it always waited; we now apply this to all items.
+          targetImg.onload = runAnimation;
+          setTimeout(runAnimation, 150);
         });
       }
     },
