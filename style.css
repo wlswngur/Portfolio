@@ -341,6 +341,11 @@ main {
   -webkit-backface-visibility: hidden;
 }
 
+.item img[src*="crack.svg"] {
+  filter: invert(var(--invert));
+  transition: filter 0.3s ease;
+}
+
 .item:hover {
   scale: var(--hover-scale);
   z-index: 5;
