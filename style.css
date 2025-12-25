@@ -757,7 +757,7 @@ main[data-barba-namespace="item"] .hero.no-gap {
     /* 화면 중앙 배치: (가용 높이 - 이미지 높이) / 2 */
     /* hero 영역 내에서 이미지가 보이는 영역의 중앙에 배치 */
     /* 헤더 48px 아래에서 시작, 텍스트 위까지 약 80dvh 가용 */
-    top: calc((100dvh - 48px - 100px - 60dvh) / 2);
+    top: calc(48px + (100dvh - 48px - 100px - 60dvh) / 2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -775,10 +775,11 @@ main[data-barba-namespace="item"] .hero.no-gap {
     /* 마지막 책은 조금 더 짧게 */
   }
 
-  /* 첫 번째 이미지 중앙 정렬 wrapper */
+  /* 첫 번째 이미지 중앙 정렬 wrapper - Transparency fix: add padding top internally */
   main[data-barba-namespace="item"] .first-image-wrapper {
-    min-height: calc(100dvh - 48px - 100px);
-    /* 최소 높이: 화면 - 헤더 - 텍스트 */
+    min-height: calc(100dvh - 100px);
+    padding-top: 48px;
+    /* 최소 높이: 화면(100) - 텍스트(100) -> padding-top 48 includes logic */
     display: flex;
     align-items: center;
     /* 수직 중앙 */
@@ -934,8 +935,7 @@ main[data-barba-namespace="item"] .item-logo img {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding-top: 48px;
-    /* Header height */
+    padding-top: 0;
   }
 
   main[data-barba-namespace="item"] .hero {
@@ -945,7 +945,7 @@ main[data-barba-namespace="item"] .item-logo img {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 10px 20px;
+    padding: 58px 20px 10px 20px;
     box-sizing: border-box;
   }
 
@@ -1173,8 +1173,9 @@ main[data-barba-namespace="item"] .item-logo img {
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    scrollbar-width: none;
     gap: 0;
-    padding: 0;
+    padding: 48px 0 0 0;
   }
 
   main[data-barba-namespace="item"] .hero.poster-hero::-webkit-scrollbar,
