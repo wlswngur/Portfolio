@@ -864,7 +864,10 @@ barba.init({
                 // Final safety scroll reset before measuring
                 if (hero) hero.scrollLeft = 0;
 
-                // Force layout recalculation
+                // Force layout recalculation by reading dimensions
+                void targetImg.offsetHeight;
+                void targetImg.offsetWidth;
+
                 let endRect = targetImg.getBoundingClientRect();
 
 
