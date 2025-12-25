@@ -984,10 +984,16 @@ barba.init({
             runAnimation();
           };
 
-          targetImg.onload = trigger;
-          // Mobile (KakaoTalk) needs more time for layout; PC can be faster.
-          setTimeout(trigger, isMobileTransition ? 150 : 20);
-          if (targetImg.complete) trigger();
+          if (isMobileTransition) {
+            // Mobile (KakaoTalk): ALWAYS wait 150ms for layout to settle.
+            // Instant trigger for cached images caused misplacement in in-app browsers.
+            setTimeout(trigger, 150);
+          } else {
+            // PC: Speed is priority. Fast trigger allowed.
+            targetImg.onload = trigger;
+            setTimeout(trigger, 20);
+            if (targetImg.complete) trigger();
+          }
         });
       }
     },
