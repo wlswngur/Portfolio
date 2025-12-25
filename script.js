@@ -976,10 +976,18 @@ barba.init({
             });
           };
 
-          // Ensure layout settlement and asset readiness (consistent for all browsers/items)
-          // Item 4 (video) worked because it always waited; we now apply this to all items.
-          targetImg.onload = runAnimation;
-          setTimeout(runAnimation, 150);
+          // Prevent double execution and ensure layout stability (fixes "weird" PC behavior)
+          let didRun = false;
+          const trigger = () => {
+            if (didRun) return;
+            didRun = true;
+            runAnimation();
+          };
+
+          targetImg.onload = trigger;
+          // Mobile (KakaoTalk) needs more time for layout; PC can be faster.
+          setTimeout(trigger, isMobileTransition ? 150 : 20);
+          if (targetImg.complete) trigger();
         });
       }
     },
