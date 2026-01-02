@@ -318,6 +318,52 @@ function updateZoomIcon() {
   }
 }
 
+// =============================================================================
+// DYNAMIC PANEL CREATION
+// =============================================================================
+
+function ensurePanels() {
+  const header = document.querySelector('header');
+  if (!header) return;
+
+  // Create About Panel if it doesn't exist
+  if (!document.getElementById('aboutPanel')) {
+    const aboutHTML = `
+      <section id="aboutPanel" hidden aria-hidden="true" role="dialog" aria-labelledby="aboutTitle">
+        <div class="about-inner">
+          <h1 id="aboutTitle" hidden>About</h1>
+          <p>I'm Joohyuk Chin, a designer based in Australia.</p>
+          <p>My work focuses on <strong>minimal, functional,</strong> and <strong>visually balanced design.</strong></p>
+          <p>I build experiences that feel effortless and timeless.</p>
+        </div>
+      </section>
+    `;
+    header.insertAdjacentHTML('afterend', aboutHTML);
+  }
+
+  // Create Contact Panel if it doesn't exist
+  if (!document.getElementById('contactPanel')) {
+    const aboutPanel = document.getElementById('aboutPanel');
+    const contactHTML = `
+      <section id="contactPanel" hidden aria-hidden="true" role="dialog" aria-labelledby="contactTitle">
+        <div class="contact-inner">
+          <h1 id="contactTitle" hidden>Contact</h1>
+          <div class="contact-stack">
+            <a class="insta-link" href="https://instagram.com/joohyukchin" target="_blank" rel="noopener" aria-label="Instagram">
+              <img src="assets/Instagram_Glyph_Black.svg" alt="Instagram logo" draggable="false" />
+            </a>
+            <p><a class="email-link" href="mailto:wlswngurau@gmail.com">wlswngurau@gmail.com</a></p>
+          </div>
+        </div>
+      </section>
+    `;
+    aboutPanel.insertAdjacentHTML('afterend', contactHTML);
+  }
+}
+
+// Ensure panels exist before querying them
+ensurePanels();
+
 // Panels
 const aboutBtn = document.querySelector('.about-btn');
 const contactBtn = document.querySelector('.contact-btn');
