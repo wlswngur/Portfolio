@@ -321,8 +321,8 @@ function updateZoomIcon() {
 // Panels
 const aboutBtn = document.querySelector('.about-btn');
 const contactBtn = document.querySelector('.contact-btn');
-const aboutPanel = document.getElementById('aboutPanel');
-const contactPanel = document.getElementById('contactPanel');
+let aboutPanel = document.getElementById('aboutPanel');
+let contactPanel = document.getElementById('contactPanel');
 let aboutPrevIcon = null;
 let contactPrevIcon = null;
 
@@ -655,6 +655,10 @@ barba.hooks.after(() => {
   document.body.style.paddingRight = '';
   const header = document.querySelector('header');
   if (header) header.style.marginRight = '';
+
+  // Re-query panel elements after transition (fixes panels not working after item->home navigation)
+  aboutPanel = document.getElementById('aboutPanel');
+  contactPanel = document.getElementById('contactPanel');
 });
 
 barba.init({
