@@ -673,6 +673,25 @@ if ('scrollRestoration' in history) {
 
 // Global hook for memory cleanup & interaction lock
 barba.hooks.before((data) => {
+  // Close any open panels immediately
+  if (aboutPanel && aboutPanel.classList.contains('open')) {
+    aboutPanel.classList.remove('open');
+    aboutPanel.hidden = true;
+    aboutPanel.setAttribute('aria-hidden', 'true');
+    document.querySelector('.about-btn')?.classList.remove('active');
+    aboutPrevIcon = null;
+  }
+  if (contactPanel && contactPanel.classList.contains('open')) {
+    contactPanel.classList.remove('open');
+    contactPanel.hidden = true;
+    contactPanel.setAttribute('aria-hidden', 'true');
+    document.querySelector('.contact-btn')?.classList.remove('active');
+    contactPrevIcon = null;
+  }
+  // Reset scroll lock from panels
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+
   // 2. Memory Leak Fix: Kill all GSAP tweens and ScrollTriggers
   gsap.killTweensOf("*");
   if (typeof ScrollTrigger !== 'undefined') {
@@ -843,7 +862,22 @@ barba.init({
           const tl = gsap.timeline({
             onComplete: () => {
               isAnimating = false;
-              gsap.set(nextContainer, { clearProps: "all" });
+              gsap.set(nextContainer, { clearProps: "position,top,left,width,height,zIndex,opacity,overflow,overflowY,transform" });
+
+              // Restore mockup visibility
+              if (mockup) {
+                if (isMobileTransition) {
+                  gsap.set(mockup, { display: 'block' });
+                } else {
+                  gsap.set(mockup, { opacity: 1 });
+                }
+              }
+
+              // Re-enable interactions
+              document.documentElement.style.overflow = 'auto';
+              document.body.style.overflow = 'auto';
+              const zoomBtn = document.getElementById('zoomBtn');
+              if (zoomBtn) zoomBtn.style.pointerEvents = 'auto';
             }
           });
           gsap.set(nextContainer, { opacity: 0 });
@@ -877,7 +911,22 @@ barba.init({
           const tl = gsap.timeline({
             onComplete: () => {
               isAnimating = false;
-              gsap.set(nextContainer, { clearProps: "all" });
+              gsap.set(nextContainer, { clearProps: "position,top,left,width,height,zIndex,opacity,overflow,overflowY,transform" });
+
+              // Restore mockup visibility
+              if (mockup) {
+                if (isMobileTransition) {
+                  gsap.set(mockup, { display: 'block' });
+                } else {
+                  gsap.set(mockup, { opacity: 1 });
+                }
+              }
+
+              // Re-enable interactions
+              document.documentElement.style.overflow = 'auto';
+              document.body.style.overflow = 'auto';
+              const zoomBtn = document.getElementById('zoomBtn');
+              if (zoomBtn) zoomBtn.style.pointerEvents = 'auto';
             }
           });
           gsap.set(nextContainer, { opacity: 0 });
