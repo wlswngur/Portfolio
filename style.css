@@ -17,6 +17,8 @@
   --panel-text-shadow: 0 0 11px rgba(255, 255, 255, 0.5);
   --panel-icon-shadow: drop-shadow(0 0 7px rgba(255, 255, 255, 0.3));
   --header-bg: rgba(242, 242, 242, 0.7);
+  --logo-height: clamp(24px, 3.2vw, 34px);
+  --gutter: clamp(16px, 2.2vw, 24px);
 }
 
 html.dark-mode {
@@ -74,8 +76,6 @@ body::-webkit-scrollbar {
 }
 
 header {
-  --logo-height: clamp(24px, 3.2vw, 34px);
-  --gutter: clamp(16px, 2.2vw, 24px);
   position: fixed;
   top: 0;
   left: 0;
@@ -567,8 +567,13 @@ main {
 }
 
 @media (max-width: 600px) {
-  header {
+  :root {
     --logo-height: clamp(20px, 2vw, 30px);
+    --gutter: 20px;
+    /* 모바일에서 기본 20px 여백 보장 */
+  }
+
+  header {
     --header-height: 48px;
     /* 2/3 of 72px */
     height: var(--header-height);
@@ -757,7 +762,7 @@ main[data-barba-namespace="item"] .hero.no-gap {
     /* 화면 중앙 배치: (가용 높이 - 이미지 높이) / 2 */
     /* hero 영역 내에서 이미지가 보이는 영역의 중앙에 배치 */
     /* 헤더 48px 아래에서 시작, 텍스트 위까지 약 80dvh 가용 */
-    top: calc(48px + (100dvh - 48px - 100px - 60dvh) / 2);
+    top: calc(48px + (100dvh - 48px - 116px - 60dvh) / 2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -777,7 +782,7 @@ main[data-barba-namespace="item"] .hero.no-gap {
 
   /* 첫 번째 이미지 중앙 정렬 wrapper - Transparency fix: add padding top internally */
   main[data-barba-namespace="item"] .first-image-wrapper {
-    min-height: calc(100dvh - 100px);
+    min-height: calc(100dvh - 116px);
     padding-top: 48px;
     /* 최소 높이: 화면(100) - 텍스트(100) -> padding-top 48 includes logic */
     display: flex;
@@ -920,7 +925,7 @@ main[data-barba-namespace="item"] .item-logo img {
     flex-direction: column;
     padding-top: 0;
     /* Remove main padding */
-    padding-bottom: env(safe-area-inset-bottom, 20px);
+    padding-bottom: 0;
     z-index: 1;
   }
 
@@ -981,7 +986,8 @@ main[data-barba-namespace="item"] .item-logo img {
     width: 100%;
     max-width: none;
     text-align: left;
-    padding: 0 20px;
+    padding: 0 var(--gutter);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
     flex-shrink: 0;
     touch-action: none;
     overscroll-behavior: none;
@@ -1195,7 +1201,7 @@ main[data-barba-namespace="item"] .item-logo img {
     max-width: 100%;
     scroll-snap-align: center;
     object-fit: contain;
-    padding: 0 20px;
+    padding: 0 var(--gutter);
     box-sizing: border-box;
   }
 
@@ -1210,7 +1216,7 @@ main[data-barba-namespace="item"] .item-logo img {
     max-height: 100%;
     scroll-snap-align: center;
     object-fit: contain;
-    padding: 0 20px;
+    padding: 0 var(--gutter);
     box-sizing: border-box;
     box-shadow: none;
     transform: none !important;
