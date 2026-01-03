@@ -862,7 +862,20 @@ barba.init({
           const tl = gsap.timeline({
             onComplete: () => {
               isAnimating = false;
-              gsap.set(nextContainer, { clearProps: "position,top,left,width,height,zIndex,opacity,overflow,overflowY,transform" });
+
+              // Respect mobile layout (fixed) vs desktop (relative)
+              const isMobile = window.innerWidth <= 600;
+              gsap.set(nextContainer, {
+                position: isMobile ? 'fixed' : 'relative',
+                opacity: 1,
+                zIndex: 1,
+                top: isMobile ? 0 : 'auto',
+                left: isMobile ? 0 : 'auto',
+                width: '100%',
+                height: isMobile ? '100%' : 'auto',
+                overflow: isMobile ? 'hidden' : 'visible',
+                clearProps: "transform"
+              });
 
               // Restore mockup visibility
               if (mockup) {
@@ -878,6 +891,13 @@ barba.init({
               document.body.style.overflow = 'auto';
               const zoomBtn = document.getElementById('zoomBtn');
               if (zoomBtn) zoomBtn.style.pointerEvents = 'auto';
+
+              // Restore hero scroll and snap
+              const heroSection = nextContainer.querySelector('.hero');
+              if (heroSection) {
+                heroSection.style.overflow = 'auto';
+                heroSection.style.scrollSnapType = ''; // Restore snap
+              }
             }
           });
           gsap.set(nextContainer, { opacity: 0 });
@@ -911,7 +931,20 @@ barba.init({
           const tl = gsap.timeline({
             onComplete: () => {
               isAnimating = false;
-              gsap.set(nextContainer, { clearProps: "position,top,left,width,height,zIndex,opacity,overflow,overflowY,transform" });
+
+              // Respect mobile layout (fixed) vs desktop (relative)
+              const isMobile = window.innerWidth <= 600;
+              gsap.set(nextContainer, {
+                position: isMobile ? 'fixed' : 'relative',
+                opacity: 1,
+                zIndex: 1,
+                top: isMobile ? 0 : 'auto',
+                left: isMobile ? 0 : 'auto',
+                width: '100%',
+                height: isMobile ? '100%' : 'auto',
+                overflow: isMobile ? 'hidden' : 'visible',
+                clearProps: "transform"
+              });
 
               // Restore mockup visibility
               if (mockup) {
@@ -927,6 +960,13 @@ barba.init({
               document.body.style.overflow = 'auto';
               const zoomBtn = document.getElementById('zoomBtn');
               if (zoomBtn) zoomBtn.style.pointerEvents = 'auto';
+
+              // Restore hero scroll and snap
+              const heroSection = nextContainer.querySelector('.hero');
+              if (heroSection) {
+                heroSection.style.overflow = 'auto';
+                heroSection.style.scrollSnapType = ''; // Restore snap
+              }
             }
           });
           gsap.set(nextContainer, { opacity: 0 });
