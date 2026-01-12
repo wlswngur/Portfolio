@@ -175,6 +175,18 @@ header {
   /* Smooth hide/show */
 }
 
+/* Disable long-press context menu on header (except logo) */
+header *:not(.logo):not(.logo *) {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+header img:not(.logo img) {
+  pointer-events: none;
+}
+
+
 /* Hide Logo and Nav on Item Page */
 body.item-view header .logo,
 body.item-view header .site-nav {

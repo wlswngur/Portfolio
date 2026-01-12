@@ -141,6 +141,20 @@ function initPreloader() {
 // Start preloader
 initPreloader();
 
+// Prevent right-click context menu on header (except logo)
+document.addEventListener('contextmenu', (e) => {
+  const header = document.querySelector('header');
+  if (!header) return;
+
+  const target = e.target;
+  const isInHeader = header.contains(target);
+  const isLogo = target.closest('.logo');
+
+  if (isInHeader && !isLogo) {
+    e.preventDefault();
+  }
+});
+
 
 // Global Theme Toggle Listener (Event Delegation)
 document.addEventListener('click', (e) => {
