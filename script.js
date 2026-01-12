@@ -29,6 +29,119 @@ function initTheme() {
 }
 initTheme();
 
+/**
+ * Preloader Animation Logic
+ */
+function initPreloader() {
+  const preloader = document.getElementById('preloader');
+  if (!preloader) return;
+
+  const fillWrapper = preloader.querySelector('.logo-fill-wrapper');
+  const logoContainer = preloader.querySelector('.preloader-logo-container');
+  const headerLogo = document.querySelector('header .logo');
+
+  // Disable scroll while preloading
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  // Track loading progress
+  let progress = 0;
+  let isComplete = false;
+
+  // Update fill based on progress (0-100)
+  function updateFill(percent) {
+    const clipValue = 100 - percent; // 100% progress = 0% clipped (fully visible)
+    gsap.to(fillWrapper, {
+      clipPath: `inset(${clipValue}% 0 0 0)`,
+      duration: 0.3,
+      ease: "power1.out",
+      overwrite: true
+    });
+  }
+
+  // Check if already loaded
+  if (document.readyState === 'complete') {
+    updateFill(100);
+    requestAnimationFrame(() => {
+      startExitTransition();
+    });
+  } else {
+    // Start with small progress to show activity
+    updateFill(10);
+
+    // Listen for DOM content loaded (~50%)
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!isComplete) {
+        progress = Math.max(progress, 50);
+        updateFill(progress);
+      }
+    });
+
+    // Listen for full page load (100%)
+    window.addEventListener('load', () => {
+      isComplete = true;
+      updateFill(100);
+      // Small delay to ensure fill animation completes
+      setTimeout(() => {
+        startExitTransition();
+      }, 350);
+    });
+  }
+
+  function startExitTransition() {
+    const preloaderBg = preloader.querySelector('.preloader-bg');
+
+    // 1. Fade out ONLY the white background overlay
+    // Delay it so it disappears as the logo arrives at the header
+    gsap.to(preloaderBg, {
+      opacity: 0,
+      duration: 0.6,
+      delay: 0.2, // Wait for logo to start moving
+      ease: "power2.inOut",
+      onComplete: () => {
+        // Re-enable scroll
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+    });
+
+    // 2. Move logo to header position
+    moveLogo();
+  }
+
+  function moveLogo() {
+    if (!headerLogo) return;
+
+    // Ensure header logo is ready but invisible
+    gsap.set(headerLogo, { opacity: 0, visibility: 'visible' });
+
+    const currentRect = logoContainer.getBoundingClientRect();
+    const targetRect = headerLogo.getBoundingClientRect();
+
+    // Calculate displacement relative to current centered position
+    const dx = (targetRect.left + targetRect.width / 2) - (currentRect.left + currentRect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (currentRect.top + currentRect.height / 2);
+
+    gsap.to(logoContainer, {
+      x: dx,
+      y: dy,
+      duration: 0.8,
+      ease: "power3.inOut",
+      onComplete: () => {
+        // Final swap: show real header logo, hide preloader container
+        gsap.set(headerLogo, { opacity: 1 });
+        preloader.style.display = 'none';
+      }
+    });
+  }
+
+}
+
+
+// Start preloader
+initPreloader();
+
+
 // Global Theme Toggle Listener (Event Delegation)
 document.addEventListener('click', (e) => {
   const toggle = e.target.closest('#themeToggle');
