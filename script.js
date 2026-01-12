@@ -301,6 +301,14 @@ function toBackIcon() { setBackIcon(); }
 function toPlusIcon() { setPlusIcon(); }
 
 function updateZoomIcon() {
+  // Always show back icon when About or Contact panel is open
+  const aboutPanelOpen = document.getElementById('aboutPanel')?.classList.contains('open');
+  const contactPanelOpen = document.getElementById('contactPanel')?.classList.contains('open');
+  if (aboutPanelOpen || contactPanelOpen) {
+    setBackIcon();
+    return;
+  }
+
   const isMobile = window.innerWidth <= 600;
   if (isMobile) {
     if (layout === 1) setBackIcon();
@@ -631,6 +639,7 @@ window.addEventListener("resize", () => {
     layout = newLayout;
   }
   updateLayout(layout);
+  updateZoomIcon(); // Sync icon with layout state on resize
 });
 
 // 아이템 페이지 헤더 스크롤 핸들러
