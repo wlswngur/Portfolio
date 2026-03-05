@@ -487,7 +487,7 @@ function ensurePanels() {
             <a class="insta-link" href="https://instagram.com/joohyukchin" target="_blank" rel="noopener" aria-label="Instagram">
               <img src="assets/Instagram_Glyph_Black.svg" alt="Instagram logo" draggable="false" />
             </a>
-            <p><a class="email-link" href="mailto:wlswngurau@gmail.com">wlswngurau@gmail.com</a></p>
+            <p><a class="email-link" href="mailto:chin@joohy.uk">chin@joohy.uk</a></p>
           </div>
         </div>
       </section>
