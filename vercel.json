@@ -11,7 +11,7 @@
       ]
     },
     {
-      "source": "/(script.js|style.css)",
+      "source": "/(script.js|book-sequence.js|concertina-sequence.js|style.css)",
       "headers": [
         {
           "key": "Cache-Control",

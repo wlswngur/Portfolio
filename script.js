@@ -182,18 +182,6 @@ let activeItem = null;
 let savedScrollY = 0;
 let isAnimating = false; // Track animation state
 
-const CONCERTINA_FRAME_COUNT = 61; // 0000 to 0060
-const CONCERTINA_MOBILE_BREAKPOINT = 600;
-const CONCERTINA_FOLDED_CROP = 0.151;
-const CONCERTINA_EXPANDED_CROP = 0.0067;
-const CONCERTINA_FOLDED_VISIBLE_RATIO = 1 - (CONCERTINA_FOLDED_CROP * 2);
-let concertinaFramesLoaded = false;
-let concertinaFrames = [];
-let concertinaFramesPromise = null;
-let concertinaFramesReady = false;
-let concertinaAnimating = false;
-let concertinaExpanded = false;
-
 let activeItemRect = null;
 let transitionClone = null;
 
@@ -338,7 +326,7 @@ function layoutPositions(columns) {
       let ratio = ASPECT_RATIO;
       if (id === '3') {
         // Folded: 1920/1340 ≈ 1.4328, Expanded: 1920/1894 ≈ 1.0137
-        ratio = isConcertinaExpanded() ? 1.0137 : 1.4328;
+        ratio = window.PortfolioConcertina?.isExpanded?.() ? 1.0137 : 1.4328;
       }
       if (id === '4') ratio = 1.7778;
 
@@ -407,8 +395,8 @@ function initGrid() {
   if (item3) {
     const img = item3.querySelector('img');
     if (img) {
-      const frameIndex = isConcertinaExpanded() ? CONCERTINA_FRAME_COUNT - 1 : 0;
-      img.src = `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
+      img.src = window.PortfolioConcertina?.getThumbnailSrc?.()
+        || 'assets/Concertina_sequence/Concertina0000.webp';
     }
   }
 
@@ -823,7 +811,7 @@ if ('scrollRestoration' in history) {
 
 // Global hook for memory cleanup & interaction lock
 barba.hooks.before((data) => {
-  bookSequenceInitToken++;
+  window.PortfolioBookSequence?.cancelPendingInit?.();
 
   // Close any open panels immediately
   if (aboutPanel && aboutPanel.classList.contains('open')) {
@@ -1622,13 +1610,13 @@ if (document.getElementById("grid")) {
 // Forward scroll events to hero section on item pages
 document.addEventListener('wheel', (e) => {
   // Don't scroll during Barba animations or Concertina animation
-  if (isAnimating || (typeof concertinaAnimating !== 'undefined' && concertinaAnimating)) return;
+  if (isAnimating || window.PortfolioConcertina?.isAnimating?.()) return;
 
   // Check for concertina wrapper first (item-3)
   const concertinaWrapper = document.querySelector('.concertina-sequence-wrapper');
   if (concertinaWrapper) {
     // Only allow scrolling if the concertina is expanded
-    if (typeof isConcertinaExpanded === 'function' && isConcertinaExpanded()) {
+    if (window.PortfolioConcertina?.isExpanded?.()) {
       e.preventDefault();
       concertinaWrapper.scrollTop += e.deltaY;
     }
@@ -1645,7 +1633,7 @@ document.addEventListener('wheel', (e) => {
 
 // Also block touch scrolling during animations on mobile
 document.addEventListener('touchmove', (e) => {
-  if (isAnimating || (typeof concertinaAnimating !== 'undefined' && concertinaAnimating)) {
+  if (isAnimating || window.PortfolioConcertina?.isAnimating?.()) {
     if (e.cancelable) e.preventDefault();
   }
 }, { passive: false });
@@ -1689,653 +1677,20 @@ barba.hooks.after(() => {
   }
 
   // Item 2 페이지 스크롤텔링 초기화
-  initBookSequences();
+  window.PortfolioBookSequence?.init?.();
+  window.PortfolioConcertina?.init?.();
 });
 
 // =============================================================================
-// BOOK SCROLL SEQUENCE (Item 2)
+// PAGE-SPECIFIC MODULE BRIDGE
 // =============================================================================
 
-const bookFrameCount = 60;
-let allBookFrames = null;
-let bookFramesPromise = null;
-let bookFramesReady = false;
-let bookSequenceInitToken = 0;
-let scrollTriggerLoadPromise = null;
-
-function ensureScrollTrigger() {
-  if (typeof ScrollTrigger !== 'undefined') {
-    return Promise.resolve(ScrollTrigger);
-  }
-
-  if (scrollTriggerLoadPromise) return scrollTriggerLoadPromise;
-
-  scrollTriggerLoadPromise = new Promise((resolve, reject) => {
-    const existingScript = document.querySelector('script[src*="ScrollTrigger.min.js"]');
-    if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(window.ScrollTrigger), { once: true });
-      existingScript.addEventListener('error', reject, { once: true });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js';
-    script.async = true;
-    script.onload = () => resolve(window.ScrollTrigger);
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-
-  return scrollTriggerLoadPromise;
-}
-
-// 책별 설정 및 프레임 프리로드
-function preloadBookFrames() {
-  if (bookFramesPromise) return bookFramesPromise;
-
-  const bookConfigs = [
-    { folder: 'book_sequence_1', prefix: 'Book_1' },
-    { folder: 'book_sequence_ 2', prefix: 'Book_1' },
-    { folder: 'book_sequence_3', prefix: 'Book_3' }
-  ];
-
-  if (!allBookFrames) {
-    allBookFrames = bookConfigs.map(config => {
-      const frames = [];
-      for (let i = 1; i <= bookFrameCount; i++) {
-        const img = new Image();
-        img.decoding = 'async';
-        img.src = `assets/${config.folder}/${config.prefix}${String(i).padStart(4, '0')}.webp`;
-        frames.push(img);
-      }
-      return frames;
-    });
-  }
-
-  const frameReadiness = [];
-  allBookFrames.forEach(frames => {
-    frames.forEach(img => {
-      frameReadiness.push(waitForImageReady(img));
-    });
-  });
-
-  bookFramesPromise = Promise.all(frameReadiness).then(() => {
-    bookFramesReady = true;
-    return allBookFrames;
-  });
-
-  return bookFramesPromise;
-}
-
-// 스크롤텔링 초기화
-function initBookSequences() {
-  const heroSection = document.querySelector('.hero');
-  const containers = document.querySelectorAll('.book-sequence-container');
-
-  // item 페이지가 아니면 실행하지 않음
-  if (!heroSection || containers.length === 0) return;
-  const initToken = ++bookSequenceInitToken;
-
-  ensureScrollTrigger().then((ScrollTriggerPlugin) => {
-    if (!ScrollTriggerPlugin || initToken !== bookSequenceInitToken || !heroSection.isConnected) return;
-
-    return preloadBookFrames().then((framesByBook) => {
-      if (initToken !== bookSequenceInitToken || !heroSection.isConnected) return;
-
-      // ScrollTrigger 등록
-      gsap.registerPlugin(ScrollTriggerPlugin);
-
-      // 기존 ScrollTrigger 정리
-      ScrollTriggerPlugin.getAll().forEach(st => st.kill());
-      const isMobile = window.innerWidth <= 600;
-
-      // 레이아웃 안정화 후 초기화
-      setTimeout(() => {
-        if (initToken !== bookSequenceInitToken || !heroSection.isConnected) return;
-
-        ScrollTriggerPlugin.refresh();
-
-        containers.forEach((container, index) => {
-          if (!container.isConnected) return;
-
-          const stickyWrapper = container.querySelector('.book-sequence-sticky');
-          const sequenceImg = container.querySelector('.book-sequence-img');
-          const frames = framesByBook[index];
-
-          if (!stickyWrapper || !sequenceImg || !frames || !bookFramesReady) return;
-
-          // 모바일/데스크톱 공통: GSAP pin 사용
-          // 모바일에서 content-wrapper의 overflow:hidden 때문에 sticky가 작동 안 하는 문제 해결
-
-          // 이전 프레임 인덱스 추적 (동일 프레임 src 교체 방지)
-          let currentFrameIndex = -1;
-
-          if (isMobile) {
-            // 모바일: Pin 없이 스크롤 진행에 따라 이미지만 교체 (덜덜거림 완전 제거)
-            // 컨테이너가 자연스럽게 스크롤되면서 이미지가 회전
-            ScrollTriggerPlugin.create({
-              trigger: container,
-              scroller: heroSection,
-              start: "top top",      // 컨테이너 상단이 화면 상단에 도달하면 시작
-              end: "bottom bottom",   // 컨테이너 하단이 화면 하단에 도달하면 종료
-              scrub: true,
-              onUpdate: (self) => {
-                const frameIndex = Math.min(
-                  Math.floor(self.progress * bookFrameCount),
-                  bookFrameCount - 1
-                );
-                if (frameIndex !== currentFrameIndex && frames[frameIndex] && frames[frameIndex].complete) {
-                  sequenceImg.src = frames[frameIndex].src;
-                  currentFrameIndex = frameIndex;
-                }
-              }
-            });
-          } else {
-            // 데스크톱: GSAP Pin 사용 (부드럽게 작동)
-            ScrollTriggerPlugin.create({
-              trigger: container,
-              scroller: heroSection,
-              pin: stickyWrapper,
-              pinType: "transform",
-              anticipatePin: 1,
-              start: "center center",
-              end: "+=200%",
-              scrub: 0.5,
-              fastScrollEnd: true,
-              onUpdate: (self) => {
-                const frameIndex = Math.min(
-                  Math.floor(self.progress * bookFrameCount),
-                  bookFrameCount - 1
-                );
-                if (frameIndex !== currentFrameIndex && frames[frameIndex] && frames[frameIndex].complete) {
-                  sequenceImg.src = frames[frameIndex].src;
-                  currentFrameIndex = frameIndex;
-                }
-              }
-            });
-          }
-        });
-      }, 100);
-    });
-  }).catch(() => { });
-}
-
-// 페이지 로드 시 초기화
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initBookSequences();
-  });
-} else {
-  initBookSequences();
-}
-// =============================================================================
-// ITEM 3: CONCERTINA CLICK SEQUENCE ANIMATION (Simplified & Robust)
-// =============================================================================
-
-// State: false = folded, true = expanded
-// Uses variable (not sessionStorage) so it resets on page refresh but persists during Barba navigations
-// concertinaExpanded defined at top
-
-// Simple state functions
-function isConcertinaExpanded() {
-  return concertinaExpanded;
-}
-
-function setConcertinaExpanded(expanded) {
-  concertinaExpanded = expanded;
-}
-
-// Get current frame based on expanded state
-function getConcertinaFrame() {
-  return isConcertinaExpanded() ? CONCERTINA_FRAME_COUNT - 1 : 0;
-}
-
-function getConcertinaFrameSrc(frameIndex) {
-  return `assets/Concertina_sequence/Concertina${String(frameIndex).padStart(4, '0')}.webp`;
-}
-
-function isMobileConcertina() {
-  return window.innerWidth <= CONCERTINA_MOBILE_BREAKPOINT;
-}
-
-function getConcertinaMobileMetrics(wrapper) {
-  const wrapperHeight = wrapper.clientHeight || (window.innerHeight - 48);
-  const imageHeight = wrapperHeight / CONCERTINA_FOLDED_VISIBLE_RATIO;
-  const yFolded = imageHeight * -CONCERTINA_FOLDED_CROP;
-  const yExpanded = imageHeight * -CONCERTINA_EXPANDED_CROP;
-  const targetScroll = Math.max(0, (imageHeight - wrapperHeight) / 2);
-
-  return {
-    imageHeight,
-    yFolded,
-    yExpanded,
-    targetScroll
-  };
-}
-
-function waitForImageReady(img) {
-  if (!img) return Promise.resolve();
-
-  const loadPromise = img.complete
-    ? Promise.resolve()
-    : new Promise((resolve) => {
-      img.onload = resolve;
-      img.onerror = resolve;
-    });
-
-  return loadPromise.then(() => {
-    if (img.naturalWidth && img.decode) {
-      return img.decode().catch(() => { });
-    }
-  });
-}
-
-// Preload and decode all frames before sequence playback
-function preloadConcertinaFrames() {
-  if (concertinaFramesPromise) return concertinaFramesPromise;
-  concertinaFramesLoaded = true;
-
-  for (let i = 0; i < CONCERTINA_FRAME_COUNT; i++) {
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = getConcertinaFrameSrc(i);
-    concertinaFrames.push(img);
-  }
-
-  concertinaFramesPromise = Promise.all(concertinaFrames.map(waitForImageReady)).then(() => {
-    concertinaFramesReady = true;
-    return concertinaFrames;
-  });
-
-  return concertinaFramesPromise;
-}
-
-function scheduleConcertinaPreload() {
-  if (concertinaFramesPromise) return;
-
-  const run = () => {
-    preloadConcertinaFrames();
-  };
-
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(run, { timeout: 800 });
-  } else {
-    setTimeout(run, 120);
-  }
-}
-
-function setMobileConcertinaImage(container = document) {
-  const wrapper = container.querySelector('.concertina-sequence-wrapper');
-  const img = container.querySelector('.concertina-sequence-img');
-  if (!img || !wrapper) return;
-
-  const expanded = isConcertinaExpanded();
-  const frameIndex = getConcertinaFrame();
-  const metrics = getConcertinaMobileMetrics(wrapper);
-  const y = expanded ? metrics.yExpanded : metrics.yFolded;
-
-  img.src = getConcertinaFrameSrc(frameIndex);
-  img.style.height = `${metrics.imageHeight}px`;
-  img.style.marginTop = '';
-  img.style.marginBottom = '';
-  img.style.transform = `translate3d(0, ${y}px, 0)`;
-
-  wrapper.classList.toggle('is-expanded', expanded);
-  wrapper.style.overflowY = expanded ? 'auto' : 'hidden';
-  wrapper.scrollTop = expanded ? metrics.targetScroll : 0;
-}
-
-// Set image to current state (no animation)
-function setConcertinaImage(container = document) {
-  if (isMobileConcertina()) {
-    setMobileConcertinaImage(container);
-    return;
-  }
-
-  const wrapper = container.querySelector('.concertina-sequence-wrapper');
-  const img = container.querySelector('.concertina-sequence-img');
-  if (!img || !wrapper) return;
-
-  const expanded = isConcertinaExpanded();
-  const frameIndex = getConcertinaFrame();
-  img.src = getConcertinaFrameSrc(frameIndex);
-  img.style.height = '';
-  img.style.transform = '';
-
-  // Constants for margin calculations (desktop only)
-  const vSpace = window.innerHeight;
-  const v_a = vSpace - 144;
-  const h_c = v_a * 1.4328;
-  const marginFolded = h_c * -0.151;
-  const marginExpanded = h_c * -0.0067;
-
-  // Always reset scroll to top on entry
-  wrapper.scrollTop = 0;
-
-  if (!expanded) {
-    wrapper.classList.remove('is-expanded');
-    wrapper.style.overflowY = 'hidden';
-    img.style.marginTop = marginFolded + 'px';
-    img.style.marginBottom = marginFolded + 'px';
-  } else {
-    wrapper.classList.add('is-expanded');
-    wrapper.style.overflowY = 'auto';
-    img.style.marginTop = marginExpanded + 'px';
-    img.style.marginBottom = marginExpanded + 'px';
-  }
-}
-
-function toggleMobileConcertina() {
-  if (concertinaAnimating) return;
-
-  const wrapper = document.querySelector('.concertina-sequence-wrapper');
-  const img = document.querySelector('.concertina-sequence-img');
-  if (!img || !wrapper) return;
-
-  const currentlyExpanded = isConcertinaExpanded();
-  concertinaAnimating = true;
-
-  const play = () => {
-    const startFrame = currentlyExpanded ? CONCERTINA_FRAME_COUNT - 1 : 0;
-    const endFrame = currentlyExpanded ? 0 : CONCERTINA_FRAME_COUNT - 1;
-    const metrics = getConcertinaMobileMetrics(wrapper);
-    let lastFrame = startFrame;
-
-    wrapper.classList.remove('is-preparing');
-    wrapper.style.overflowY = 'hidden';
-    wrapper.classList.add('is-expanded');
-    img.style.height = `${metrics.imageHeight}px`;
-    img.style.marginTop = '';
-    img.style.marginBottom = '';
-
-    const animState = {
-      frame: startFrame,
-      scroll: currentlyExpanded ? wrapper.scrollTop : 0,
-      y: currentlyExpanded ? metrics.yExpanded : metrics.yFolded
-    };
-
-    gsap.killTweensOf(animState);
-    gsap.to(animState, {
-      frame: endFrame,
-      scroll: currentlyExpanded ? 0 : metrics.targetScroll,
-      y: currentlyExpanded ? metrics.yFolded : metrics.yExpanded,
-      duration: 0.82,
-      ease: "power2.inOut",
-      onUpdate: () => {
-        const frame = Math.round(animState.frame);
-        if (frame !== lastFrame && concertinaFrames[frame] && concertinaFrames[frame].complete) {
-          img.src = concertinaFrames[frame].src;
-          lastFrame = frame;
-        }
-
-        wrapper.scrollTop = animState.scroll;
-        img.style.transform = `translate3d(0, ${animState.y}px, 0)`;
-      },
-      onComplete: () => {
-        const nextState = !currentlyExpanded;
-        setConcertinaExpanded(nextState);
-        concertinaAnimating = false;
-
-        img.src = getConcertinaFrameSrc(endFrame);
-        img.style.transform = `translate3d(0, ${nextState ? metrics.yExpanded : metrics.yFolded}px, 0)`;
-
-        if (nextState) {
-          wrapper.classList.add('is-expanded');
-          wrapper.style.overflowY = 'auto';
-          wrapper.scrollTop = metrics.targetScroll;
-        } else {
-          wrapper.classList.remove('is-expanded');
-          wrapper.style.overflowY = 'hidden';
-          wrapper.scrollTop = 0;
-        }
-      }
-    });
-  };
-
-  if (!concertinaFramesReady) {
-    wrapper.classList.add('is-preparing');
-  }
-
-  preloadConcertinaFrames()
-    .then(play)
-    .catch(() => {
-      concertinaAnimating = false;
-      wrapper.classList.remove('is-preparing');
-    });
-}
-
-// Animate between states
-function toggleConcertina() {
-  if (isMobileConcertina()) {
-    toggleMobileConcertina();
-    return;
-  }
-  if (concertinaAnimating) return;
-
-  const wrapper = document.querySelector('.concertina-sequence-wrapper');
-  const img = document.querySelector('.concertina-sequence-img');
-  const header = document.querySelector('header');
-  if (!img || !wrapper) return;
-
-  preloadConcertinaFrames();
-
-  const currentlyExpanded = isConcertinaExpanded();
-  const startFrame = currentlyExpanded ? CONCERTINA_FRAME_COUNT - 1 : 0;
-  const endFrame = currentlyExpanded ? 0 : CONCERTINA_FRAME_COUNT - 1;
-  let lastFrame = startFrame;
-
-  concertinaAnimating = true;
-
-  // Constants for margin calculations (desktop only)
-  const vSpace = window.innerHeight;
-  const v_a = vSpace - 144;
-  const h_c = v_a * 1.4328;
-  const marginFolded = h_c * -0.151;
-  const marginExpanded = h_c * -0.0067;
-
-  // Calculate target scroll
-  const h_v_e = h_c * (1894 / 1920);
-  const totalH = h_v_e + 144;
-  const targetScroll = Math.max(0, (totalH - vSpace) / 2);
-
-  // Initial setup for expansion
-  if (!currentlyExpanded && wrapper) {
-    wrapper.style.overflowY = 'hidden';
-    wrapper.classList.add('is-expanded');
-  } else if (currentlyExpanded && wrapper) {
-    wrapper.style.overflowY = 'hidden';
-  }
-
-  // Header animation
-  if (header) {
-    gsap.to(header, { y: currentlyExpanded ? '0%' : '-100%', duration: 0.4, ease: "power2.inOut" });
-  }
-
-  // Master Animation Object
-  const animState = {
-    frame: startFrame,
-    scroll: currentlyExpanded ? wrapper.scrollTop : 0,
-    margin: currentlyExpanded ? marginExpanded : marginFolded
-  };
-
-  gsap.to(animState, {
-    frame: endFrame,
-    scroll: currentlyExpanded ? 0 : targetScroll,
-    margin: currentlyExpanded ? marginFolded : marginExpanded,
-    duration: 1,
-    ease: "power2.inOut",
-    onUpdate: () => {
-      // 1. Update image frame
-      const f = Math.round(animState.frame);
-      if (f !== lastFrame && concertinaFrames[f] && concertinaFrames[f].complete) {
-        img.src = concertinaFrames[f].src;
-        lastFrame = f;
-      }
-
-      // 2. Update scroll position
-      wrapper.scrollTop = animState.scroll;
-
-      // 3. Update margins (crucial for jitter-free)
-      img.style.marginTop = animState.margin + 'px';
-      img.style.marginBottom = animState.margin + 'px';
-    },
-    onComplete: () => {
-      const nextState = !currentlyExpanded;
-      setConcertinaExpanded(nextState);
-      concertinaAnimating = false;
-
-      // Ensure final values
-      img.src = getConcertinaFrameSrc(endFrame);
-
-      if (nextState) {
-        // Only enable scroll AFTER expansion completes
-        wrapper.style.overflowY = 'auto';
-      } else {
-        wrapper.style.overflowY = 'hidden';
-        wrapper.scrollTop = 0;
-        wrapper.classList.remove('is-expanded');
-      }
-    }
-  });
-}
-
-// Single global click handler (added only once)
-let concertinaClickHandlerAdded = false;
-
-function addConcertinaClickHandler() {
-  if (concertinaClickHandlerAdded) return;
-  concertinaClickHandlerAdded = true;
-
-  document.addEventListener('click', (e) => {
-    // Disable concertina toggle on mobile
-    if (isMobileConcertina()) return;
-
-    // Only work on item-3 page
-    if (!document.querySelector('.concertina-interactive')) return;
-
-    // Ignore buttons, links, nav, header
-    if (e.target.closest('button, a, nav, header')) return;
-
-    toggleConcertina();
-  });
-}
-
-function addMobileConcertinaTapHandler(concertinaWrapper) {
-  if (concertinaWrapper._mobileConcertinaTapInit) return;
-  concertinaWrapper._mobileConcertinaTapInit = true;
-
-  let tapStart = null;
-
-  concertinaWrapper.addEventListener('pointerdown', (e) => {
-    if (!isMobileConcertina() || concertinaAnimating) return;
-
-    const hero = concertinaWrapper.closest('.hero');
-    tapStart = {
-      x: e.clientX,
-      y: e.clientY,
-      scrollTop: concertinaWrapper.scrollTop,
-      heroScrollLeft: hero ? hero.scrollLeft : 0
-    };
-  }, { passive: true });
-
-  concertinaWrapper.addEventListener('pointerup', (e) => {
-    if (!tapStart || !isMobileConcertina() || concertinaAnimating) {
-      tapStart = null;
-      return;
-    }
-
-    const hero = concertinaWrapper.closest('.hero');
-    const dx = Math.abs(e.clientX - tapStart.x);
-    const dy = Math.abs(e.clientY - tapStart.y);
-    const didVerticalScroll = Math.abs(concertinaWrapper.scrollTop - tapStart.scrollTop) > 4;
-    const didHorizontalSwipe = hero && Math.abs(hero.scrollLeft - tapStart.heroScrollLeft) > 4;
-
-    tapStart = null;
-
-    if (dx <= 12 && dy <= 12 && !didVerticalScroll && !didHorizontalSwipe) {
-      toggleConcertina();
-    }
-  }, { passive: true });
-
-  concertinaWrapper.addEventListener('pointercancel', () => {
-    tapStart = null;
-  }, { passive: true });
-}
-
-// Initialize Concertina on item-3 page
-function initConcertinaSequence() {
-  const concertinaWrapper = document.querySelector('.concertina-sequence-wrapper');
-  if (!concertinaWrapper) return;
-
-  // Warm frames after first paint; tapping still forces preload if needed.
-  scheduleConcertinaPreload();
-
-  // Set image to saved state
-  setConcertinaImage();
-
-  if (isMobileConcertina()) {
-    addMobileConcertinaTapHandler(concertinaWrapper);
-    return;
-  }
-
-  // Add click handler (only once)
-  addConcertinaClickHandler();
-
-  // Add header scroll handler (hide on scroll down, show on scroll up)
-  let lastScrollY = 0;
-  const header = document.querySelector('header');
-  if (concertinaWrapper._desktopConcertinaScrollInit) return;
-  concertinaWrapper._desktopConcertinaScrollInit = true;
-
-  concertinaWrapper.addEventListener('scroll', () => {
-    // Skip header hide on mobile
-    if (isMobileConcertina()) return;
-
-    const currentScrollY = concertinaWrapper.scrollTop;
-
-    if (currentScrollY < 0) return;
-
-    if (currentScrollY > lastScrollY && currentScrollY > 50) {
-      // Scrolling down - hide header
-      header.style.transform = 'translateY(-100%)';
-    } else if (currentScrollY < lastScrollY) {
-      // Scrolling up - show header
-      header.style.transform = 'translateY(0)';
-    }
-    lastScrollY = currentScrollY;
-  }, { passive: true });
-}
-
-// Initialize on page load
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initConcertinaSequence);
-} else {
-  initConcertinaSequence();
-}
-
-// Initialize on Barba transitions
-// 1. BEFORE ENTER: Set correct state/scroll immediately so it doesn't flicker
 barba.hooks.beforeEnter((data) => {
-  // Only for item-3 page
-  const wrapper = data.next.container.querySelector('.concertina-sequence-wrapper');
-  if (wrapper) {
-    // Reset scroll and setup state immediately before it shows
-    setConcertinaImage(data.next.container);
-
-    // Specifically handle header visibility if already expanded
-    const header = document.querySelector('header');
-    if (header && !isMobileConcertina() && isConcertinaExpanded()) {
-      gsap.set(header, { y: '-100%' });
-    } else if (header) {
-      gsap.set(header, { y: '0%' });
-    }
-  }
+  window.PortfolioConcertina?.beforeEnter?.(data);
 });
 
-// 2. AFTER: Handle preloading and listeners
-barba.hooks.after(() => {
-  initConcertinaSequence();
-});
+window.PortfolioBookSequence?.init?.();
+window.PortfolioConcertina?.init?.();
 
 // =============================================================================
 // ITEM 3: DRAGGABLE MOCKUP LOGIC
