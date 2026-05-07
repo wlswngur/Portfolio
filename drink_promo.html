@@ -16,8 +16,10 @@
         content="A promotional video highlighting mocktail menu items with mood-driven visuals." />
     <meta property="og:image" content="https://joohyukchin.com/assets/Drink%20promo.webp" />
 
-    <link rel="icon" href="assets/favicon111.svg" type="favicon.svg">
+    <link rel="icon" href="assets/favicon111.svg" type="image/svg+xml">
     <!-- Inter font -->
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -39,15 +41,15 @@
 
     <header>
         <a class="logo" href="/" aria-label="Home">
-            <img src="assets/logo.svg" alt="Joohyuk Chin Logo" draggable="false" />
+            <img src="assets/logo.svg" alt="Joohyuk Chin Logo" draggable="false" decoding="async" />
         </a>
 
         <nav class="site-nav">
             <button class="nav-btn about-btn" aria-label="About">
-                <img src="assets/ABOUT.svg" alt="About" draggable="false" />
+                <img src="assets/ABOUT.svg" alt="About" draggable="false" decoding="async" />
             </button>
             <button class="nav-btn contact-btn" aria-label="Contact">
-                <img src="assets/CONTACT.svg" alt="Contact" draggable="false" />
+                <img src="assets/CONTACT.svg" alt="Contact" draggable="false" decoding="async" />
             </button>
         </nav>
 
@@ -67,9 +69,9 @@
     <main data-barba="container" data-barba-namespace="item" data-id="4">
         <div class="content-wrapper">
             <div class="hero video-hero">
-                <video src="assets/Drink promo.mp4" poster="assets/Drink promo.webp" loop muted playsinline></video>
+                <video src="assets/Drink promo.mp4" poster="assets/Drink promo.webp" loop muted playsinline preload="metadata"></video>
                 <!-- Mockup Image (swipeable on mobile) -->
-                <img id="draggableMockup" src="assets/drink promo mock-up.webp" alt="Mockup" draggable="false" />
+                <img id="draggableMockup" src="assets/drink promo mock-up.webp" alt="Mockup" draggable="false" loading="lazy" decoding="async" />
             </div>
 
             <div class="swipe-indicator">
@@ -85,12 +87,12 @@
         </div>
 
         <a href="/" class="item-logo">
-            <img src="assets/logo.svg" alt="Back to Home" draggable="false" />
+            <img src="assets/logo.svg" alt="Back to Home" draggable="false" decoding="async" />
         </a>
     </main>
 
     <!-- Scripts (load your JS at the end of body) -->
-    <script src="https://unpkg.com/@barba/core"></script>
+    <script src="https://unpkg.com/@barba/core@2.10.3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="script.js"></script>
 

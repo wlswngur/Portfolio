@@ -157,6 +157,27 @@ body::-webkit-scrollbar {
   display: none;
 }
 
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--text-color);
+  outline-offset: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 header {
   position: fixed;
   top: 0;
@@ -942,6 +963,9 @@ main[data-barba-namespace="item"] .first-image-wrapper img {
   justify-content: center;
   overflow: hidden;
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: paint;
   /* GPU 가속 레이어 미리 생성 */
 }
 
@@ -950,6 +974,10 @@ main[data-barba-namespace="item"] .first-image-wrapper img {
   height: 100%;
   object-fit: contain;
   display: block;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* Text (Bottom Half Center) - Fixed */
@@ -1194,14 +1222,27 @@ main[data-barba-namespace="item"] .item-logo img {
 /* Mobile adjustments for Concertina (Item 3) - Simplified to match Item 1 */
 @media (max-width: 600px) {
 
-  /* Make wrapper fill height and center content, hide overflow for cropping */
+  /* Make wrapper fill height and crop the folded canvas cleanly */
   .concertina-sequence-wrapper {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+    touch-action: pan-x;
+    cursor: pointer;
+  }
+
+  .concertina-sequence-wrapper.is-expanded {
+    overflow-y: auto;
+    touch-action: pan-x pan-y;
+  }
+
+  .concertina-sequence-wrapper.is-preparing {
+    cursor: progress;
   }
 
   /* Remove spacers on mobile */
@@ -1215,11 +1256,16 @@ main[data-barba-namespace="item"] .item-logo img {
   /* Ratio = 290/1920 ≈ 0.151 or 15.1% of image height */
   .concertina-sequence-wrapper img {
     width: auto;
-    height: calc(100% / 0.7);
+    height: calc(100% / 0.698);
     /* Scale up to compensate for cropped empty space (1340/1920 ≈ 0.7) */
     max-height: none;
-    margin: 0 !important;
+    margin: 0;
     object-fit: contain;
+    will-change: transform;
+  }
+
+  .concertina-sequence-wrapper.is-expanded img {
+    margin: 0;
   }
 }
 
